@@ -1,13 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Montserrat', sans-serif;
+  --color-brand:     #2563EB;
+  --color-brand-600: #1d4ed8;
+  --color-dark:      #0f1623;
+  --color-dark-900:  #0a1121;
+  --color-dark-800:  #111d2e;
+  --color-dark-700:  #1a2535;
+  --color-dark-600:  #243045;
+  --color-dark-500:  #2e3d55;
+}
+
+:root {
+  --hy-bg-main:           #0d1829;
+  --hy-bg-sidebar:        #0a1121;
+  --hy-bg-header:         #0b1424;
+  --hy-bg-card:           #111e31;
+  --hy-bg-card2:          #0f1929;
+  --hy-bg-input:          #0d1829;
+  --hy-border:            #1a2840;
+  --hy-border2:           #1e2f47;
+  --hy-text1:             #e2e8f0;
+  --hy-text2:             #94a3b8;
+  --hy-text3:             #4e6685;
+  --hy-text4:             #2d4461;
+  --hy-brand:             #2563EB;
+  --hy-brand-hover:       #1d4ed8;
+  --hy-nav-text:          #4e6685;
+  --hy-nav-text-hover:    #94a3b8;
+  --hy-nav-text-active:   #e2e8f0;
+  --hy-nav-active-bg:     rgba(37,99,235,0.13);
+  --hy-nav-active-shadow: inset 3px 0 0 #2563EB;
+  --hy-nav-hover-bg:      #162236;
+  --hy-nav-section:       #2d4461;
+  --hy-nav-icon-active:   #2563EB;
+  --hy-th-bg:             #0d1829;
+  --hy-sidebar-border:    1px solid #1a2840;
+  --hy-header-border:     1px solid #1a2840;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  background-color: var(--hy-bg-main);
+  color: var(--hy-text1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--hy-bg-sidebar); }
+::-webkit-scrollbar-thumb { background: var(--hy-border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hy-brand); }
