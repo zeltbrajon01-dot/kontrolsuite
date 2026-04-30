@@ -8,21 +8,21 @@ export function sanitizeText(value, maxLen = 1000) {
 
 export function sanitizeEmail(value) {
   if (!value) return '';
-  return String(value).trim().toLowerCase().slice(0, 254).replace(/[^a-z0-9@._+\-]/g, '');
+  return String(value).trim().toLowerCase().slice(0, 254).replace(/[^a-z0-9@._+-]/g, '');
 }
 
 export function sanitizePhone(value) {
   if (!value) return '';
-  return String(value).trim().replace(/[^0-9+\-() ]/g, '').slice(0, 20);
+  return String(value).trim().replace(/[^0-9+() -]/g, '').slice(0, 20);
 }
 
 export function sanitizeNumber(value, decimals = 2) {
-  const n = parseFloat(String(value).replace(/[^0-9.\-]/g, '')) || 0;
+  const n = parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
   return parseFloat(n.toFixed(decimals));
 }
 
 export function sanitizeInt(value) {
-  return parseInt(String(value).replace(/[^0-9\-]/g, ''), 10) || 0;
+  return parseInt(String(value).replace(/[^0-9-]/g, ''), 10) || 0;
 }
 
 export function sanitizePercent(value) {

@@ -2,7 +2,7 @@ const PRIO_LABEL = { baja: 'Baja', media: 'Media', alta: 'Alta', urgente: 'Urgen
 
 export function cleanPhone(phone) {
   if (!phone) return '';
-  return String(phone).replace(/[\s\-\(\)\+]/g, '');
+  return String(phone).replace(/[-\s()+]/g, '');
 }
 
 export function waLink(phone, message) {
