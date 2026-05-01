@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { sanitizeEmail } from '../../lib/sanitize';
 import Logo from '../../components/ui/Logo';
 
 function Field({ label, children }) {
@@ -23,13 +24,16 @@ export default function RegisterPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState('');
+  const [terms, setTerms] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    if (!terms) { setError('Debes aceptar los Términos y Condiciones y el Aviso de Privacidad para continuar.'); return; }
     if (password !== confirm) return setError('Las contraseñas no coinciden.');
+    const cleanEmail = sanitizeEmail(email);
     setLoading(true);
-    const { error } = await signUp(email, password);
+    const { error } = await signUp(cleanEmail, password);
     if (error) {
       setError(error.message);
     } else {
@@ -212,12 +216,30 @@ export default function RegisterPage() {
             ) : 'Crear cuenta gratuita'}
           </button>
 
-          <p style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', margin: 0, fontFamily: 'Montserrat, sans-serif' }}>
-            Al registrarte aceptas nuestros{' '}
-            <span style={{ color: '#64748b', cursor: 'pointer' }}>Términos de servicio</span>
-            {' '}y{' '}
-            <span style={{ color: '#64748b', cursor: 'pointer' }}>Política de privacidad</span>.
-          </p>
+          {/* Required T&C checkbox */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              required
+              checked={terms}
+              onChange={e => setTerms(e.target.checked)}
+              style={{ marginTop: 2, width: 15, height: 15, accentColor: '#2563EB', flexShrink: 0, cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '12.5px', color: '#374151', lineHeight: 1.6, fontFamily: 'Montserrat, sans-serif' }}>
+              Acepto los{' '}
+              <Link to="/terminos" target="_blank" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}
+                onMouseEnter={e => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={e => e.target.style.textDecoration = 'none'}
+              >Términos y Condiciones</Link>
+              {' '}y el{' '}
+              <Link to="/privacidad" target="_blank" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}
+                onMouseEnter={e => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={e => e.target.style.textDecoration = 'none'}
+              >Aviso de Privacidad</Link>
+              {' '}de KontrolSuite.com.
+              <span style={{ color: '#ef4444' }}> *</span>
+            </span>
+          </label>
         </form>
 
         {/* Divider */}
@@ -247,6 +269,21 @@ export default function RegisterPage() {
         >
           Iniciar sesión
         </Link>
+      </div>
+
+      {/* Legal footer */}
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.35)', fontFamily: 'Montserrat, sans-serif' }}>
+          <Link to="/terminos" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+          >Términos y Condiciones</Link>
+          {' · '}
+          <Link to="/privacidad" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+          >Aviso de Privacidad</Link>
+        </p>
       </div>
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>

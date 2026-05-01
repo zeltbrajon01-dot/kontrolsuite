@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
       const { data } = await supabase
         .from('perfiles')
         .select('empresa_id, rol, nombre, email')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
       if (data) {
         setEmpresaId(data.empresa_id);

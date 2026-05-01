@@ -118,6 +118,7 @@ export default function ComunicacionPage() {
     if (!bodyText.trim()) return alert('El cuerpo no puede estar vacío.');
     if (emailSel.size === 0) return alert('Selecciona al menos un destinatario.');
     const dest = leads.filter(l => emailSel.has(l.id));
+    console.log('[ComunicacionPage] Leads seleccionados para envío:', dest.map(l => ({ id: l.id, nombre: l.nombre, email: l.email })));
     if (!window.confirm(`Enviar email a ${dest.length} lead${dest.length !== 1 ? 's' : ''}?\n\nAsunto: ${subject}`)) return;
     setSending(true);
     setEmailResult(null);

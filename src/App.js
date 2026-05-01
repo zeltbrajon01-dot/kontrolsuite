@@ -8,6 +8,8 @@ import LoginPage           from './pages/auth/LoginPage';
 import RegisterPage        from './pages/auth/RegisterPage';
 import ForgotPasswordPage  from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage   from './pages/auth/ResetPasswordPage';
+import PrivacidadPage      from './pages/legal/PrivacidadPage';
+import TerminosPage        from './pages/legal/TerminosPage';
 
 import DashboardLayout    from './components/layout/DashboardLayout';
 import DashboardPage      from './pages/dashboard/DashboardPage';
@@ -65,6 +67,10 @@ export default function App() {
             {/* Password reset — standalone, no auth guard */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password"  element={<ResetPasswordPage />} />
+
+            {/* Legal pages — public, no auth guard */}
+            <Route path="/privacidad" element={<PrivacidadPage />} />
+            <Route path="/terminos"   element={<TerminosPage />} />
 
             <Route path="/"  element={<Navigate to="/dashboard" replace />} />
             <Route path="*"  element={<Navigate to="/dashboard" replace />} />

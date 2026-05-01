@@ -1,7 +1,7 @@
 // Vercel serverless function — runs server-side, no CORS issues
 // Env var: RESEND_KEY (set in Vercel dashboard, NOT prefixed with REACT_APP_)
 const RESEND_KEY = process.env.RESEND_KEY;
-const FROM = 'onboarding@resend.dev';
+const FROM = 'noreply@kontrolsuite.com';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,20 +14,22 @@ module.exports = async function handler(req, res) {
   if (!RESEND_KEY) return res.status(500).json({ error: 'RESEND_KEY not configured on server' });
 
   const { to, subject, html, batch } = req.body || {};
+  console.log('[send-email] body recibido:', JSON.stringify({ to, subject, batch: batch?.length }, null, 2));
 
   try {
     let url, body;
 
     if (batch) {
-      // Batch send: body is an array of {from, to, subject, html}
       url = 'https://api.resend.com/emails/batch';
       body = batch.map(email => ({ from: FROM, ...email }));
+      console.log('[send-email] batch payload (primeros 3):', JSON.stringify(body.slice(0, 3), null, 2));
     } else {
-      // Single send: body is {to, subject, html}
       const recipients = (Array.isArray(to) ? to : [to]).filter(e => e && e.includes('@'));
       if (!recipients.length) return res.status(400).json({ error: 'Sin destinatarios válidos' });
       url = 'https://api.resend.com/emails';
-      body = { from: FROM, to: recipients, subject, html };
+      body = { from: FROM, to: recipients, subject, html: html?.slice(0, 100) + '…' };
+      console.log('[send-email] single payload:', JSON.stringify(body, null, 2));
+      body.html = html; // restore full html after logging
     }
 
     const upstream = await fetch(url, {
@@ -40,8 +42,12 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await upstream.json();
+    if (!upstream.ok) {
+      console.error('[send-email] Resend error', upstream.status, JSON.stringify(data, null, 2));
+    }
     return res.status(upstream.status).json(data);
   } catch (err) {
+    console.error('[send-email] excepción:', err.message);
     return res.status(500).json({ error: err.message });
   }
 };

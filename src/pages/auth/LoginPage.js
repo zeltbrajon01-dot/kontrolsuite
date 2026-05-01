@@ -307,6 +307,21 @@ export default function LoginPage() {
         </Link>
       </div>
 
+      {/* Legal footer */}
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.35)', fontFamily: 'Montserrat, sans-serif' }}>
+          <Link to="/terminos" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+          >Términos y Condiciones</Link>
+          {' · '}
+          <Link to="/privacidad" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+          >Aviso de Privacidad</Link>
+        </p>
+      </div>
+
       {/* Keyframe for spinner */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>

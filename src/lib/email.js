@@ -86,6 +86,8 @@ export async function sendTareaAsignada({ tarea, proyectoNombre, responsableEmai
 /* ─── Email masivo a leads ───────────────────────────────────────── */
 export async function sendMasivo({ leads, subject, bodyText }) {
   const validos = leads.filter(l => l.email && l.email.includes('@'));
+  console.log('[sendMasivo] leads recibidos:', leads.map(l => l.email));
+  console.log('[sendMasivo] validos (tienen @):', validos.map(l => l.email));
   if (!validos.length) return { enviados: 0, fallidos: 0, errores: ['No hay leads con email válido'] };
 
   const CHUNK = 100;

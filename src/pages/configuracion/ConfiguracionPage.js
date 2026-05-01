@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 
 function ThemeCard({ theme, selected, onSelect }) {
@@ -155,6 +156,59 @@ export default function ConfiguracionPage() {
           <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--hy-text4)', fontWeight: 600 }}>Próximamente</span>
         </section>
       ))}
+
+      {/* ── Legal ── */}
+      <section style={{
+        backgroundColor: 'var(--hy-bg-card)', border: '1px solid var(--hy-border)',
+        borderRadius: 14, overflow: 'hidden', marginTop: 8,
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--hy-border)', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 10,
+            backgroundColor: 'rgba(100,116,139,0.1)', color: 'var(--hy-text3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          </div>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--hy-text1)' }}>Legal</h3>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--hy-text3)' }}>
+              Documentos legales de KontrolSuite.com · HellYeah Agency
+            </p>
+          </div>
+        </div>
+        <div style={{ padding: '8px 12px' }}>
+          {[
+            { to: '/terminos',   label: 'Términos y Condiciones',   desc: 'Condiciones de uso del servicio, pagos y responsabilidades' },
+            { to: '/privacidad', label: 'Aviso de Privacidad',       desc: 'Tratamiento de datos personales conforme a la LFPDPPP' },
+          ].map(({ to, label, desc }) => (
+            <Link
+              key={to}
+              to={to}
+              target="_blank"
+              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 12px', borderRadius: 10, textDecoration: 'none', transition: 'background 0.12s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--hy-bg-main)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--hy-text1)' }}>{label}</p>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--hy-text3)', marginTop: 2 }}>{desc}</p>
+              </div>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--hy-text4)', flexShrink: 0 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </Link>
+          ))}
+        </div>
+        <div style={{ padding: '12px 24px', borderTop: '1px solid var(--hy-border)', background: 'var(--hy-bg-card2)' }}>
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--hy-text4)' }}>
+            Preguntas legales: <a href="mailto:legal@kontrolsuite.com" style={{ color: 'var(--hy-brand)', textDecoration: 'none', fontWeight: 600 }}>legal@kontrolsuite.com</a>
+            {' · '}Última actualización: 1 de mayo de 2026
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
