@@ -105,7 +105,7 @@ export default function RegisterPage() {
       >
         {/* Logo */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
-          <Logo size="lg" variant="dark" />
+          <Logo size="lg" variant="light-bg" />
         </div>
 
         {/* Heading */}

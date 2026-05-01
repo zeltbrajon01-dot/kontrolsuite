@@ -5,6 +5,7 @@ export const THEMES = {
     id: 'default',
     name: 'Predeterminado',
     desc: 'Oscuro azul marino',
+    darkSidebar: true,
     preview: { sidebar: '#0a1121', main: '#0d1829', accent: '#2563EB', card: '#111e31' },
     vars: {
       '--hy-bg-main':            '#0d1829',
@@ -39,6 +40,7 @@ export const THEMES = {
     id: 'blue',
     name: 'Azul Corporativo',
     desc: 'Blanco con sidebar azul marino',
+    darkSidebar: true,
     preview: { sidebar: '#1e3a5f', main: '#f1f5f9', accent: '#2563EB', card: '#ffffff' },
     vars: {
       '--hy-bg-main':            '#f1f5f9',
@@ -73,6 +75,7 @@ export const THEMES = {
     id: 'green',
     name: 'Verde Esmeralda',
     desc: 'Blanco con sidebar verde oscuro',
+    darkSidebar: true,
     preview: { sidebar: '#064E3B', main: '#f0fdf4', accent: '#059669', card: '#ffffff' },
     vars: {
       '--hy-bg-main':            '#f0fdf4',
@@ -107,6 +110,7 @@ export const THEMES = {
     id: 'purple',
     name: 'Midnight Purple',
     desc: 'Gris oscuro con sidebar morado',
+    darkSidebar: true,
     preview: { sidebar: '#4C1D95', main: '#1E1E2E', accent: '#cba6f7', card: '#24243e' },
     vars: {
       '--hy-bg-main':            '#1E1E2E',
@@ -141,6 +145,7 @@ export const THEMES = {
     id: 'noir',
     name: 'Noir Profesional',
     desc: 'Sidebar negro, contenido blanco',
+    darkSidebar: true,
     preview: { sidebar: '#0a0a0a', main: '#f9fafb', accent: '#4F46E5', card: '#ffffff' },
     vars: {
       '--hy-bg-main':            '#f9fafb',
@@ -175,6 +180,7 @@ export const THEMES = {
     id: 'white',
     name: 'Blanco Profesional',
     desc: 'Todo blanco, estilo Monday / Bitrix24',
+    darkSidebar: false,
     preview: { sidebar: '#ffffff', main: '#f4f6f8', accent: '#2563EB', card: '#ffffff' },
     vars: {
       '--hy-bg-main':            '#f4f6f8',

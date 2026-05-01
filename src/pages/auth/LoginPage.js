@@ -142,7 +142,7 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
-          <Logo size="lg" variant="dark" />
+          <Logo size="lg" variant="light-bg" />
         </div>
 
         {/* Heading */}
@@ -309,15 +309,15 @@ export default function LoginPage() {
 
       {/* Legal footer */}
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
-        <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.35)', fontFamily: 'Montserrat, sans-serif' }}>
-          <Link to="/terminos" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+        <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Montserrat, sans-serif' }}>
+          <Link to="/terminos" target="_blank" style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
             onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.75)'}
           >Términos y Condiciones</Link>
           {' · '}
-          <Link to="/privacidad" target="_blank" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}
+          <Link to="/privacidad" target="_blank" style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
             onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.75)'}
           >Aviso de Privacidad</Link>
         </p>
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Logo from '../ui/Logo';
 
@@ -170,7 +170,7 @@ export default function DashboardLayout() {
           borderBottom: '1px solid var(--hy-border)',
           flexShrink: 0,
         }}>
-          <Logo size="sm" collapsed={collapsed} />
+          <Logo size="sm" collapsed={collapsed} variant="auto" />
         </div>
 
         {/* Nav */}
@@ -248,6 +248,29 @@ export default function DashboardLayout() {
               </div>
             )}
           </div>
+
+          {/* Legal links */}
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 12px 2px' }}>
+              {[
+                { to: '/terminos',   label: 'Términos' },
+                { to: '/privacidad', label: 'Privacidad' },
+              ].map(({ to, label }, i) => (
+                <span key={to} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {i > 0 && <span style={{ fontSize: 9, color: 'var(--hy-border2)' }}>·</span>}
+                  <Link
+                    to={to}
+                    target="_blank"
+                    style={{ fontSize: 10, color: 'var(--hy-text4)', textDecoration: 'none', fontFamily: 'Montserrat, sans-serif', transition: 'color 0.12s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--hy-text3)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--hy-text4)'}
+                  >
+                    {label}
+                  </Link>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
 

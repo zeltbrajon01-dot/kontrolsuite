@@ -1,24 +1,43 @@
-export default function Logo({ size = 'md', collapsed = false, variant = 'light' }) {
-  const sizes = {
-    sm: { icon: 22, fontSize: '15px' },
-    md: { icon: 28, fontSize: '18px' },
-    lg: { icon: 36, fontSize: '24px' },
-    xl: { icon: 48, fontSize: '32px' },
-  };
-  const { icon, fontSize } = sizes[size];
-  const nameColor = variant === 'dark' ? '#0f172a' : '#ffffff';
+import { useTheme, THEMES } from '../../contexts/ThemeContext';
+
+/**
+ * variant:
+ *   'auto'      — reads darkSidebar from current theme (use in sidebar)
+ *   'light-bg'  — always logo-oscuro.png (logo on white/light card)
+ *   'dark-bg'   — always logo-claro.png  (logo on dark background)
+ *   'dark'      — legacy alias for 'light-bg'
+ */
+export default function Logo({ size = 'md', collapsed = false, variant = 'auto' }) {
+  const { currentId } = useTheme();
+
+  const heights    = { sm: 30, md: 36, lg: 44, xl: 56 };
+  const collHeights = { sm: 26, md: 30, lg: 36, xl: 44 };
+  const h = collapsed ? collHeights[size] : heights[size];
+
+  let darkSidebar;
+  if (variant === 'light-bg' || variant === 'dark') {
+    darkSidebar = false; // light background → dark logo
+  } else if (variant === 'dark-bg') {
+    darkSidebar = true;  // dark background → light logo
+  } else {
+    // 'auto' — read from theme definition
+    darkSidebar = THEMES[currentId]?.darkSidebar ?? true;
+  }
+
+  const src = darkSidebar ? '/logo-claro.png' : '/logo-oscuro.png';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', userSelect: 'none' }}>
-      <svg width={icon} height={icon} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="8" fill="#2563EB" />
-        <path d="M18.5 4L9 17.5H16L13.5 28L23 14.5H16L18.5 4Z" fill="white" />
-      </svg>
-      {!collapsed && (
-        <span style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 800, fontSize, letterSpacing: '-0.5px', color: nameColor }}>
-          Hell<span style={{ color: '#2563EB' }}>Yeah</span>
-        </span>
-      )}
-    </div>
+    <img
+      src={src}
+      alt="KontrolSuite"
+      style={{
+        height: h,
+        width: 'auto',
+        maxWidth: '100%',
+        objectFit: 'contain',
+        display: 'block',
+        userSelect: 'none',
+      }}
+    />
   );
 }
