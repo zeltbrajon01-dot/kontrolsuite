@@ -1,38 +1,32 @@
 import { useTheme, THEMES } from '../../contexts/ThemeContext';
 
-/**
- * variant:
- *   'auto'      — reads darkSidebar from current theme (use in sidebar)
- *   'light-bg'  — always logo-oscuro.png (logo on white/light card)
- *   'dark-bg'   — always logo-claro.png  (logo on dark background)
- *   'dark'      — legacy alias for 'light-bg'
- */
 export default function Logo({ size = 'md', collapsed = false, variant = 'auto' }) {
   const { currentId } = useTheme();
 
-  const heights    = { sm: 30, md: 36, lg: 44, xl: 56 };
-  const collHeights = { sm: 26, md: 30, lg: 36, xl: 44 };
-  const h = collapsed ? collHeights[size] : heights[size];
+  // Width-based sizing: sm=sidebar, lg=login card
+  const widths = { sm: 80, md: 100, lg: 120, xl: 150 };
+  const w = collapsed ? 44 : widths[size] ?? 80;
 
+  // darkSidebar=true → dark bg → light logo (logo-claro)
+  // darkSidebar=false → light bg → dark logo (logo-oscuro)
   let darkSidebar;
   if (variant === 'light-bg' || variant === 'dark') {
-    darkSidebar = false; // light background → dark logo
+    darkSidebar = false;
   } else if (variant === 'dark-bg') {
-    darkSidebar = true;  // dark background → light logo
+    darkSidebar = true;
   } else {
-    // 'auto' — read from theme definition
     darkSidebar = THEMES[currentId]?.darkSidebar ?? true;
   }
 
-  const src = darkSidebar ? '/logo-claro.png' : '/logo-negro.png';
+  const src = darkSidebar ? '/logo-claro.png' : '/logo-oscuro.png';
 
   return (
     <img
       src={src}
       alt="KontrolSuite"
       style={{
-        height: h,
-        width: 'auto',
+        width: w,
+        height: 'auto',
         maxWidth: '100%',
         objectFit: 'contain',
         display: 'block',

@@ -308,8 +308,8 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      {/* Legal footer */}
-      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+      {/* Legal footer — outside the white card */}
+      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', marginTop: '24px' }}>
         <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Montserrat, sans-serif' }}>
           <Link to="/terminos" target="_blank" style={{ color: 'rgba(255,255,255,0.75)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
             onMouseEnter={e => e.currentTarget.style.color = '#fff'}
