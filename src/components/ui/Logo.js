@@ -24,7 +24,7 @@ export default function Logo({ size = 'md', collapsed = false, variant = 'auto' 
     darkSidebar = THEMES[currentId]?.darkSidebar ?? true;
   }
 
-  const src = darkSidebar ? '/logo-claro.png' : '/logo-oscuro.png';
+  const src = darkSidebar ? '/logo-claro.png' : '/logo-negro.png';
 
   return (
     <img

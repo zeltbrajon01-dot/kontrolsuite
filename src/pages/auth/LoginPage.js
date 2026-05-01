@@ -101,6 +101,7 @@ export default function LoginPage() {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #0f1623 0%, #1a2744 100%)',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px',
@@ -274,7 +275,7 @@ export default function LoginPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0 20px' }}>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
           <span style={{ fontSize: '12px', color: '#cbd5e1', fontFamily: 'Montserrat, sans-serif', whiteSpace: 'nowrap' }}>
-            ¿Nuevo en HellYeah?
+            ¿Nuevo en KontrolSuite?
           </span>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#e2e8f0' }} />
         </div>
