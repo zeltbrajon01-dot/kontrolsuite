@@ -1,11 +1,13 @@
 import { useTheme, THEMES } from '../../contexts/ThemeContext';
 
+const LOGO_V = '20260503';
+
 export default function Logo({ size = 'md', collapsed = false, variant = 'auto' }) {
   const { currentId } = useTheme();
 
-  // Width-based sizing: sm=sidebar, lg=login card
-  const widths = { sm: 80, md: 100, lg: 120, xl: 150 };
-  const w = collapsed ? 44 : widths[size] ?? 80;
+  // sm=sidebar expanded, lg=login card
+  const widths = { sm: 120, md: 130, lg: 160, xl: 180 };
+  const w = collapsed ? 48 : widths[size] ?? 120;
 
   // darkSidebar=true → dark bg → light logo (logo-claro)
   // darkSidebar=false → light bg → dark logo (logo-oscuro)
@@ -18,7 +20,8 @@ export default function Logo({ size = 'md', collapsed = false, variant = 'auto' 
     darkSidebar = THEMES[currentId]?.darkSidebar ?? true;
   }
 
-  const src = darkSidebar ? '/logo-claro.png' : '/logo-oscuro.png';
+  const file = darkSidebar ? 'logo-claro.png' : 'logo-oscuro.png';
+  const src = `/${file}?v=${LOGO_V}`;
 
   return (
     <img
