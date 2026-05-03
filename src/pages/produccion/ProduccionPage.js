@@ -41,6 +41,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, PieChart, Pie, Cell,
@@ -103,6 +104,7 @@ function useEsc(fn) {
 
 /* ── OrdenModal ─────────────────────────────────────────── */
 function OrdenModal({ orden, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(orden || EMPTY_ORDEN);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -126,7 +128,7 @@ function OrdenModal({ orden, onSave, onClose }) {
       const { error } = await supabase.from('ordenes_trabajo').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('ordenes_trabajo').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('ordenes_trabajo').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);
@@ -212,6 +214,7 @@ function OrdenModal({ orden, onSave, onClose }) {
 
 /* ── InventarioModal ────────────────────────────────────── */
 function InventarioModal({ item, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(item || EMPTY_INV);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -234,7 +237,7 @@ function InventarioModal({ item, onSave, onClose }) {
       const { error } = await supabase.from('inventario').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('inventario').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('inventario').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);

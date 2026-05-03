@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import ExpedienteModal    from './ExpedienteModal';
 import EvaluacionesModal  from './EvaluacionesModal';
 import {
@@ -74,6 +75,7 @@ const avatarColor = (nombre) => {
 /*  MODAL                                                     */
 /* ══════════════════════════════════════════════════════════ */
 function EmpleadoModal({ open, onClose, empleado, onSaved }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -146,7 +148,7 @@ function EmpleadoModal({ open, onClose, empleado, onSaved }) {
       if (isEdit) {
         result = await supabase.from('empleados').update(payload).eq('id', empleado.id).select().single();
       } else {
-        result = await supabase.from('empleados').insert(payload).select().single();
+        result = await supabase.from('empleados').insert({ ...payload, empresa_id: empresaId }).select().single();
       }
 
       if (result.error) throw result.error;

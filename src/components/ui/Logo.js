@@ -6,7 +6,7 @@ export default function Logo({ size = 'md', collapsed = false, variant = 'auto' 
   const { currentId } = useTheme();
 
   // sm=sidebar expanded, lg=login card
-  const widths = { sm: 120, md: 130, lg: 160, xl: 180 };
+  const widths = { sm: 160, md: 180, lg: 220, xl: 260 };
   const w = collapsed ? 48 : widths[size] ?? 120;
 
   // darkSidebar=true → dark bg → light logo (logo-claro)

@@ -42,6 +42,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, PieChart, Pie, Cell,
@@ -101,6 +102,7 @@ const fmtMoney = (n) =>
 /*  PROJECT MODAL                                              */
 /* ═══════════════════════════════════════════════════════════ */
 function ProjectModal({ proyecto, onClose, onSaved }) {
+  const { empresaId } = useAuth();
   const isEdit = !!proyecto?.id;
   const [form, setForm] = useState(proyecto ? {
     nombre:        proyecto.nombre        ?? '',
@@ -144,7 +146,7 @@ function ProjectModal({ proyecto, onClose, onSaved }) {
     if (isEdit) {
       ({ error: dbErr } = await supabase.from('proyectos').update(payload).eq('id', proyecto.id));
     } else {
-      ({ error: dbErr } = await supabase.from('proyectos').insert({ ...payload, created_at: new Date().toISOString() }));
+      ({ error: dbErr } = await supabase.from('proyectos').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() }));
     }
     if (dbErr) { setError(dbErr.message); setSaving(false); return; }
     onSaved();

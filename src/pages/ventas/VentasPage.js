@@ -39,6 +39,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, PieChart, Pie, Cell,
@@ -91,6 +92,7 @@ function useEsc(fn) {
 
 /* ── LeadModal ─────────────────────────────────────────────── */
 function LeadModal({ lead, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(lead || EMPTY_LEAD);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -114,7 +116,7 @@ function LeadModal({ lead, onSave, onClose }) {
       const { error } = await supabase.from('leads').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('leads').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('leads').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);
@@ -189,6 +191,7 @@ function LeadModal({ lead, onSave, onClose }) {
 
 /* ── CotizacionModal ─────────────────────────────────────── */
 function CotizacionModal({ cotizacion, leads, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(cotizacion ? { ...EMPTY_COT, ...cotizacion } : EMPTY_COT);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -258,7 +261,7 @@ function CotizacionModal({ cotizacion, leads, onSave, onClose }) {
       const { error } = await supabase.from('cotizaciones').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('cotizaciones').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('cotizaciones').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);

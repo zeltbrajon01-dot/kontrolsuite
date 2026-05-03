@@ -18,6 +18,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, PieChart, Pie, Cell,
@@ -65,6 +66,7 @@ function useEsc(fn) {
 
 /* ── MovimientoModal ────────────────────────────────────── */
 function MovimientoModal({ movimiento, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(movimiento || EMPTY_MOV);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -88,7 +90,7 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
       const { error } = await supabase.from('movimientos_contables').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('movimientos_contables').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('movimientos_contables').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);

@@ -44,6 +44,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AREAS = ['Operaciones','Ventas','Marketing','TI','Recursos Humanos','Legal','Finanzas','Otro'];
 const CATS_GASTO = ['Personal','Operativo','Tecnología','Marketing','Servicios','Infraestructura','Otros'];
@@ -81,6 +82,7 @@ function useEsc(fn) {
 
 /* ── GastoModal ─────────────────────────────────────────── */
 function GastoModal({ gasto, proveedores, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(gasto || EMPTY_GASTO);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -103,7 +105,7 @@ function GastoModal({ gasto, proveedores, onSave, onClose }) {
       const { error } = await supabase.from('gastos').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('gastos').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('gastos').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);
@@ -164,6 +166,7 @@ function GastoModal({ gasto, proveedores, onSave, onClose }) {
 
 /* ── ProveedorModal ─────────────────────────────────────── */
 function ProveedorModal({ proveedor, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form, setForm] = useState(proveedor || EMPTY_PROV);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -185,7 +188,7 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
       const { error } = await supabase.from('proveedores').update(payload).eq('id', form.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('proveedores').insert({ ...payload, created_at: new Date().toISOString() });
+      const { error } = await supabase.from('proveedores').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
       dbError = error;
     }
     setSaving(false);
@@ -246,6 +249,7 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
 
 /* ── AdminPage ──────────────────────────────────────────── */
 export default function AdminPage() {
+  const { empresaId } = useAuth();
   const [gastos, setGastos]           = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
@@ -290,7 +294,7 @@ export default function AdminPage() {
       const { error } = await supabase.from('presupuestos').update({ monto }).eq('id', existing.id);
       dbError = error;
     } else {
-      const { error } = await supabase.from('presupuestos').insert({ area, mes:MES, anio:ANIO, monto, created_at:new Date().toISOString() });
+      const { error } = await supabase.from('presupuestos').insert({ area, mes:MES, anio:ANIO, monto, empresa_id: empresaId, created_at:new Date().toISOString() });
       dbError = error;
     }
     if (dbError) { alert('Error al guardar presupuesto: ' + dbError.message); return; }
