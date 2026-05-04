@@ -9,8 +9,8 @@ export default function Logo({ size = 'md', collapsed = false, variant = 'auto' 
   const widths = { sm: 160, md: 180, lg: 220, xl: 260 };
   const w = collapsed ? 48 : widths[size] ?? 120;
 
-  // darkSidebar=true → dark bg → light logo (logo-claro)
-  // darkSidebar=false → light bg → dark logo (logo-oscuro)
+  // darkSidebar=true → dark bg → light logo (logo-blanco)
+  // darkSidebar=false → light bg → dark logo (logo-negro)
   let darkSidebar;
   if (variant === 'light-bg' || variant === 'dark') {
     darkSidebar = false;
@@ -20,7 +20,7 @@ export default function Logo({ size = 'md', collapsed = false, variant = 'auto' 
     darkSidebar = THEMES[currentId]?.darkSidebar ?? true;
   }
 
-  const file = darkSidebar ? 'logo-claro.png' : 'logo-oscuro.png';
+  const file = darkSidebar ? 'logo-blanco.png' : 'logo-negro.png';
   const src = `/${file}?v=${LOGO_V}`;
 
   return (
