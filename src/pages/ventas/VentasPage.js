@@ -596,7 +596,8 @@ function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol,
 
 /* ── VentasPage ─────────────────────────────────────────── */
 export default function VentasPage() {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
   const [leads,         setLeads]         = useState([]);
   const [cotizaciones,  setCotizaciones]  = useState([]);
   const [columnas,      setColumnas]      = useState([]);
@@ -630,20 +631,19 @@ export default function VentasPage() {
   }, [columnas]);
 
   const fetchColumnas = useCallback(async () => {
-    if (!empresaId) return;
-    const { data } = await supabase.from('pipeline_columnas')
-      .select('*').eq('empresa_id', empresaId).order('orden');
+    if (!isSuperAdmin && !empresaId) return;
+    const { data } = await ef(supabase.from('pipeline_columnas').select('*')).order('orden');
     setColumnas(data || []);
-  }, [empresaId]);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
   const fetchAll = useCallback(async () => {
-    if (!empresaId) { setLeads([]); setCotizaciones([]); setIngData([]); setLoading(false); return; }
+    if (!isSuperAdmin && !empresaId) { setLeads([]); setCotizaciones([]); setIngData([]); setLoading(false); return; }
     const now  = new Date();
     const from = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split('T')[0];
     const [{ data:l }, { data:c }, { data:mov }] = await Promise.all([
-      supabase.from('leads').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
-      supabase.from('cotizaciones').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
-      supabase.from('movimientos_contables').select('tipo,monto,fecha').eq('empresa_id', empresaId).eq('tipo','ingreso').gte('fecha', from),
+      ef(supabase.from('leads').select('*')).order('created_at', { ascending:false }),
+      ef(supabase.from('cotizaciones').select('*')).order('created_at', { ascending:false }),
+      ef(supabase.from('movimientos_contables').select('tipo,monto,fecha')).eq('tipo','ingreso').gte('fecha', from),
     ]);
     setLeads(l || []);
     setCotizaciones(c || []);
@@ -659,7 +659,7 @@ export default function VentasPage() {
     });
     setIngData(months);
     setLoading(false);
-  }, [empresaId]);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
   useEffect(() => { fetchAll(); fetchColumnas(); }, [fetchAll, fetchColumnas]);
 

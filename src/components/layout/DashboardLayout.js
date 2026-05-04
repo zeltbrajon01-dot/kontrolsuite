@@ -202,7 +202,7 @@ export default function DashboardLayout() {
         overflow: 'hidden',
       }}>
         {/* Logo */}
-        <div style={{ height: 64, display: 'flex', alignItems: 'center', padding: collapsed && !isMobile ? '0 14px' : '0 20px', borderBottom: '1px solid var(--hy-border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: collapsed && !isMobile ? '24px 14px 16px' : '24px 20px 16px', borderBottom: '1px solid var(--hy-border)', flexShrink: 0 }}>
           <Logo size="sm" collapsed={collapsed && !isMobile} variant="auto" />
         </div>
 

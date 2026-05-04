@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 /* ─── Constants ───────────────────────────────────────────── */
 const ESTADO_CFG = {
@@ -321,6 +322,9 @@ function RegistroModal({ empleados, preEmp, preFecha, preRecord, onClose, onSave
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function AsistenciaPage() {
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+
   const [tab, setTab]             = useState('hoy');
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -348,24 +352,19 @@ export default function AsistenciaPage() {
 
   /* ── Load empleados ── */
   useEffect(() => {
-    supabase
-      .from('empleados')
-      .select('id, nombre, apellido, departamento')
-      .eq('estado', 'activo')
+    if (!isSuperAdmin && !empresaId) { setEmpleados([]); setLoading(false); return; }
+    ef(supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo'))
       .order('nombre')
       .then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
-  }, []);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Fetch today ── */
   const fetchHoy = useCallback(async () => {
     setTodayLoading(true);
-    const { data } = await supabase
-      .from('asistencias')
-      .select('*')
-      .eq('fecha', todayIso());
+    const { data } = await ef(supabase.from('asistencias').select('*')).eq('fecha', todayIso());
     setTodayRecs(data ?? []);
     setTodayLoading(false);
-  }, []);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (tab === 'hoy') fetchHoy(); }, [tab, fetchHoy]);
 
@@ -373,21 +372,17 @@ export default function AsistenciaPage() {
   const fetchCal = useCallback(async () => {
     if (!calEmp) { setCalRecs([]); return; }
     const { from, to } = monthRange(calYear, calMonth);
-    const { data } = await supabase
-      .from('asistencias')
-      .select('*')
-      .eq('empleado_id', calEmp)
-      .gte('fecha', from)
-      .lte('fecha', to);
+    const { data } = await ef(supabase.from('asistencias').select('*'))
+      .eq('empleado_id', calEmp).gte('fecha', from).lte('fecha', to);
     setCalRecs(data ?? []);
-  }, [calEmp, calYear, calMonth]);
+  }, [calEmp, calYear, calMonth, empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (tab === 'calendario') fetchCal(); }, [tab, calEmp, calYear, calMonth, fetchCal]);
 
   /* ── Fetch report ── */
   const fetchRep = useCallback(async () => {
     const { from, to } = monthRange(repYear, repMonth);
-    let q = supabase.from('asistencias').select('*').gte('fecha', from).lte('fecha', to).order('fecha');
+    let q = ef(supabase.from('asistencias').select('*')).gte('fecha', from).lte('fecha', to).order('fecha');
     if (repEmp) q = q.eq('empleado_id', repEmp);
     const { data } = await q;
     const empMap = Object.fromEntries(empleados.map((e) => [e.id, e]));
@@ -395,7 +390,7 @@ export default function AsistenciaPage() {
       ...r,
       _nombre: empMap[r.empleado_id] ? `${empMap[r.empleado_id].nombre} ${empMap[r.empleado_id].apellido}` : '—',
     })));
-  }, [repEmp, repYear, repMonth, empleados]);
+  }, [repEmp, repYear, repMonth, empleados, empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (tab === 'reporte' && empleados.length) fetchRep(); }, [tab, repEmp, repYear, repMonth, empleados, fetchRep]);
 

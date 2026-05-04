@@ -412,7 +412,8 @@ function EditModal({ record, empleado, onClose, onSaved }) {
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function NominaPage() {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
   const [tab, setTab]               = useState('nomina');
   const [periodo, setPeriodo]       = useState(currentPeriodo());
   const [empleados, setEmpleados]   = useState([]);
@@ -424,22 +425,19 @@ export default function NominaPage() {
 
   /* ── Load empleados ── */
   useEffect(() => {
-    if (!empresaId) { setEmpleados([]); setLoading(false); return; }
-    supabase
-      .from('empleados')
-      .select('id, nombre, apellido, puesto, departamento, sueldo, estado')
-      .eq('empresa_id', empresaId)
+    if (!isSuperAdmin && !empresaId) { setEmpleados([]); setLoading(false); return; }
+    ef(supabase.from('empleados').select('id, nombre, apellido, puesto, departamento, sueldo, estado'))
       .eq('estado', 'activo')
       .order('nombre')
       .then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
-  }, [empresaId]);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Load nomina for current period ── */
   const fetchNomina = useCallback(async () => {
-    if (!empresaId) { setNominaRecs([]); return; }
-    const { data } = await supabase.from('nomina').select('*').eq('empresa_id', empresaId).eq('periodo', periodo).order('created_at');
+    if (!isSuperAdmin && !empresaId) { setNominaRecs([]); return; }
+    const { data } = await ef(supabase.from('nomina').select('*')).eq('periodo', periodo).order('created_at');
     setNominaRecs(data ?? []);
-  }, [periodo, empresaId]);
+  }, [periodo, empresaId, isSuperAdmin]); // eslint-disable-line
 
   useEffect(() => { fetchNomina(); }, [fetchNomina]);
 

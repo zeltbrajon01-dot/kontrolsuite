@@ -90,11 +90,20 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // 1. Crear usuario en Supabase Auth
+      // 1. Crear usuario en Supabase Auth (metadata guardado para auto-provisioning en primer login)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
-        options: { data: { nombre: nombreAdmin, empresa: nombreEmpresa } },
+        options: {
+          data: {
+            nombre:                nombreAdmin,
+            empresa_nombre:        nombreEmpresa,
+            empresa_giro:          giro          || null,
+            empresa_num_empleados: numEmpleados  || null,
+            // legacy key kept for compatibility
+            empresa:               nombreEmpresa,
+          },
+        },
       });
 
       if (authError) {

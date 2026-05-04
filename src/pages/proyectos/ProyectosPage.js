@@ -276,7 +276,8 @@ function ProjectModal({ proyecto, onClose, onSaved }) {
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function ProyectosPage() {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [view, setView]           = useState('tarjetas');
@@ -286,10 +287,10 @@ export default function ProyectosPage() {
   const [tareasStats, setTareasStats] = useState({ completado:0, en_proceso:0, pendiente:0 });
 
   const fetchProyectos = useCallback(async () => {
-    if (!empresaId) { setProyectos([]); setLoading(false); return; }
+    if (!isSuperAdmin && !empresaId) { setProyectos([]); setLoading(false); return; }
     const [{ data: pData }, { data: tData }] = await Promise.all([
-      supabase.from('proyectos').select('*').eq('empresa_id', empresaId).order('created_at', { ascending: false }),
-      supabase.from('tareas').select('estado').eq('empresa_id', empresaId),
+      ef(supabase.from('proyectos').select('*')).order('created_at', { ascending: false }),
+      ef(supabase.from('tareas').select('estado')),
     ]);
     setProyectos(pData ?? []);
     if (tData) {
@@ -298,7 +299,7 @@ export default function ProyectosPage() {
       setTareasStats(s);
     }
     setLoading(false);
-  }, [empresaId]);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
   useEffect(() => { fetchProyectos(); }, [fetchProyectos]);
 

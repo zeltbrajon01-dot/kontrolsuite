@@ -251,7 +251,8 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
 
 /* ── AdminPage ──────────────────────────────────────────── */
 export default function AdminPage() {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
   const [gastos, setGastos]           = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
@@ -263,17 +264,17 @@ export default function AdminPage() {
   const [newPres, setNewPres]         = useState({});
 
   const fetchAll = useCallback(async () => {
-    if (!empresaId) { setGastos([]); setProveedores([]); setPresupuestos([]); setLoading(false); return; }
+    if (!isSuperAdmin && !empresaId) { setGastos([]); setProveedores([]); setPresupuestos([]); setLoading(false); return; }
     const [{ data:g }, { data:p }, { data:pr }] = await Promise.all([
-      supabase.from('gastos').select('*, proveedores(nombre)').eq('empresa_id', empresaId).order('fecha', { ascending:false }),
-      supabase.from('proveedores').select('*').eq('empresa_id', empresaId).order('nombre'),
-      supabase.from('presupuestos').select('*').eq('empresa_id', empresaId).eq('mes', MES).eq('anio', ANIO),
+      ef(supabase.from('gastos').select('*, proveedores(nombre)')).order('fecha', { ascending:false }),
+      ef(supabase.from('proveedores').select('*')).order('nombre'),
+      ef(supabase.from('presupuestos').select('*')).eq('mes', MES).eq('anio', ANIO),
     ]);
     setGastos(g || []);
     setProveedores(p || []);
     setPresupuestos(pr || []);
     setLoading(false);
-  }, [empresaId]);
+  }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

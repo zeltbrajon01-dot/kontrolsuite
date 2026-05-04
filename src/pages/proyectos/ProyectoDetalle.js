@@ -421,7 +421,8 @@ function KanbanColumn({ col, tareas, dragRef, onEdit, onAddNew, onDrop }) {
 
 /* ── ProyectoDetalle ────────────────────────────────────────── */
 export default function ProyectoDetalle() {
-  const { empresaId } = useAuth();
+  const { empresaId, isSuperAdmin } = useAuth();
+  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
   const { id } = useParams();
   const [proyecto, setProyecto] = useState(null);
   const [tareas, setTareas] = useState([]);
@@ -436,10 +437,10 @@ export default function ProyectoDetalle() {
   }, [id]);
 
   const fetchTareas = useCallback(async () => {
-    if (!empresaId) { setTareas([]); return; }
-    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId).order('created_at');
+    if (!isSuperAdmin && !empresaId) { setTareas([]); return; }
+    const { data } = await ef(supabase.from('tareas').select('*').eq('proyecto_id', id)).order('created_at');
     setTareas(data || []);
-  }, [id, empresaId]);
+  }, [id, empresaId, isSuperAdmin]); // eslint-disable-line
 
   useEffect(() => {
     Promise.all([fetchProyecto(), fetchTareas()]).finally(() => setLoading(false));
@@ -457,9 +458,9 @@ export default function ProyectoDetalle() {
   const handleSaveTarea = useCallback(async () => {
     setModalTarea(null);
     await fetchTareas();
-    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId);
+    const { data } = await ef(supabase.from('tareas').select('*').eq('proyecto_id', id));
     if (data) updateProgreso(data);
-  }, [fetchTareas, id, updateProgreso, empresaId]);
+  }, [fetchTareas, id, updateProgreso, empresaId, isSuperAdmin]); // eslint-disable-line
 
   const handleDrop = useCallback(async (colId) => {
     const tareaId = dragRef.current;

@@ -55,7 +55,41 @@ export function AuthProvider({ children }) {
   const logoutTimer = useRef(null);
 
   // Admin is never timed out — detected by role OR by the reserved admin email
-  const isAdmin = perfil?.rol === 'admin' || user?.email === 'admin@hellyeah.com';
+  const isAdmin      = perfil?.rol === 'admin' || user?.email === 'admin@hellyeah.com';
+  // Super-admin: platform owner who can see all empresa data without filter
+  const isSuperAdmin = user?.email === 'admin@hellyeah.com';
+
+  /* ── Auto-provision empresa + perfil on first login ─────── */
+  const autoProvisionPerfil = useCallback(async (userId) => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const meta          = authUser?.user_metadata ?? {};
+      const nombre        = meta.nombre              || authUser?.email?.split('@')[0] || 'Admin';
+      const email         = authUser?.email          ?? '';
+      const empresaNombre = meta.empresa_nombre      || meta.empresa || `Empresa de ${nombre}`;
+
+      const { data: empresa, error: empErr } = await supabase
+        .from('empresas')
+        .insert({
+          nombre:        empresaNombre,
+          giro:          meta.empresa_giro          || null,
+          num_empleados: meta.empresa_num_empleados || null,
+          admin_id:      userId,
+        })
+        .select('id').single();
+
+      if (empErr) { console.error('[AuthContext] autoProvision empresa:', empErr.message); return; }
+
+      const { data: p } = await supabase.from('perfiles').upsert(
+        { id: userId, nombre, email, empresa_id: empresa.id, rol: 'admin' },
+        { onConflict: 'id' }
+      ).select('empresa_id, rol, nombre, email').single();
+
+      if (p) { setEmpresaId(empresa.id); setPerfil(p); }
+    } catch (e) {
+      console.error('[AuthContext] autoProvision exception:', e.message);
+    }
+  }, []);
 
   /* ── Load empresa from perfiles table ────────────────────── */
   const loadPerfil = useCallback(async (userId) => {
@@ -66,19 +100,25 @@ export function AuthProvider({ children }) {
         .select('empresa_id, rol, nombre, email')
         .eq('id', userId)
         .single();
-      if (error) {
+      if (error?.code === 'PGRST116') {
+        // No perfil found — first login after email confirmation; auto-provision
+        await autoProvisionPerfil(userId);
+      } else if (error) {
         console.error('[AuthContext] loadPerfil:', error.message);
       } else if (data) {
         setEmpresaId(data.empresa_id ?? null);
         setPerfil(data);
-        if (!data.empresa_id) console.warn('[AuthContext] Sin empresa_id para usuario:', userId);
+        if (!data.empresa_id) {
+          console.warn('[AuthContext] Sin empresa_id para usuario:', userId);
+          await autoProvisionPerfil(userId);
+        }
       }
     } catch (e) {
       console.error('[AuthContext] loadPerfil exception:', e.message);
     } finally {
       setPerfilLoading(false);
     }
-  }, []);
+  }, [autoProvisionPerfil]);
 
   /* ── Inactivity timers ───────────────────────────────────── */
   const clearTimers = useCallback(() => {
@@ -151,7 +191,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user, session, loading, perfilLoading,
-    empresaId, perfil,
+    empresaId, perfil, isSuperAdmin,
     signIn, signUp, signOut, extendSession,
   };
 
