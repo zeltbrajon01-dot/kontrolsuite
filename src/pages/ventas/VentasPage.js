@@ -423,6 +423,7 @@ function KanbanCol({ etapa, leads, dragRef, onDrop, onEdit, onNewCot }) {
 
 /* ── VentasPage ─────────────────────────────────────────── */
 export default function VentasPage() {
+  const { empresaId } = useAuth();
   const [leads, setLeads]           = useState([]);
   const [cotizaciones, setCotizaciones] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -434,12 +435,13 @@ export default function VentasPage() {
   const dragRef = useRef(null);
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setLeads([]); setCotizaciones([]); setIngData([]); setLoading(false); return; }
     const now  = new Date();
     const from = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split('T')[0];
     const [{ data:l }, { data:c }, { data:mov }] = await Promise.all([
-      supabase.from('leads').select('*').order('created_at', { ascending:false }),
-      supabase.from('cotizaciones').select('*').order('created_at', { ascending:false }),
-      supabase.from('movimientos_contables').select('tipo,monto,fecha').eq('tipo','ingreso').gte('fecha', from),
+      supabase.from('leads').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
+      supabase.from('cotizaciones').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
+      supabase.from('movimientos_contables').select('tipo,monto,fecha').eq('empresa_id', empresaId).eq('tipo','ingreso').gte('fecha', from),
     ]);
     setLeads(l || []);
     setCotizaciones(c || []);
@@ -455,7 +457,7 @@ export default function VentasPage() {
     });
     setIngData(months);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

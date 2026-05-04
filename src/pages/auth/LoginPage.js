@@ -138,11 +138,12 @@ export default function LoginPage() {
           backgroundColor: '#ffffff',
           borderRadius: '24px',
           padding: '48px 44px',
+          overflow: 'visible',
           boxShadow: '0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)',
         }}
       >
         {/* Logo */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px', paddingTop: 20 }}>
           <Logo size="lg" variant="light-bg" />
         </div>
 

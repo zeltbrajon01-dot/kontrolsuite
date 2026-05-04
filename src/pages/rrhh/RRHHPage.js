@@ -407,6 +407,7 @@ function Field({ label, children }) {
 /*  PÁGINA PRINCIPAL                                          */
 /* ══════════════════════════════════════════════════════════ */
 export default function RRHHPage() {
+  const { empresaId } = useAuth();
   const [empleados, setEmpleados]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [modalOpen, setModalOpen]   = useState(false);
@@ -424,14 +425,16 @@ export default function RRHHPage() {
 
   /* ── Carga de datos ── */
   const fetchEmpleados = useCallback(async () => {
+    if (!empresaId) { setEmpleados([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('empleados')
       .select('*')
+      .eq('empresa_id', empresaId)
       .order('created_at', { ascending: false });
     if (!error && data) setEmpleados(data);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { fetchEmpleados(); }, [fetchEmpleados]);
 

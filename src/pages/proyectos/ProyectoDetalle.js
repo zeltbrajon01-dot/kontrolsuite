@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { sendTareaAsignada } from '../../lib/email';
 import { waLink, buildTareaWaMsg } from '../../lib/whatsapp';
 
@@ -418,6 +419,7 @@ function KanbanColumn({ col, tareas, dragRef, onEdit, onAddNew, onDrop }) {
 
 /* ── ProyectoDetalle ────────────────────────────────────────── */
 export default function ProyectoDetalle() {
+  const { empresaId } = useAuth();
   const { id } = useParams();
   const [proyecto, setProyecto] = useState(null);
   const [tareas, setTareas] = useState([]);
@@ -432,9 +434,10 @@ export default function ProyectoDetalle() {
   }, [id]);
 
   const fetchTareas = useCallback(async () => {
-    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).order('created_at');
+    if (!empresaId) { setTareas([]); return; }
+    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId).order('created_at');
     setTareas(data || []);
-  }, [id]);
+  }, [id, empresaId]);
 
   useEffect(() => {
     Promise.all([fetchProyecto(), fetchTareas()]).finally(() => setLoading(false));
@@ -452,9 +455,9 @@ export default function ProyectoDetalle() {
   const handleSaveTarea = useCallback(async () => {
     setModalTarea(null);
     await fetchTareas();
-    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id);
+    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId);
     if (data) updateProgreso(data);
-  }, [fetchTareas, id, updateProgreso]);
+  }, [fetchTareas, id, updateProgreso, empresaId]);
 
   const handleDrop = useCallback(async (colId) => {
     const tareaId = dragRef.current;

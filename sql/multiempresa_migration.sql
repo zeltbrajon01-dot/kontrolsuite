@@ -47,17 +47,18 @@ RETURNS UUID LANGUAGE sql SECURITY DEFINER STABLE AS $$
 $$;
 
 -- ── 4. Agregar empresa_id a todas las tablas de negocio ───────
-ALTER TABLE empleados           ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE proyectos           ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE tareas               ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE leads                ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE cotizaciones         ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE empleados             ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE proyectos             ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE tareas                ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE leads                 ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE cotizaciones          ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
 ALTER TABLE movimientos_contables ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE ordenes_trabajo      ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE inventario           ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE proveedores          ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE gastos               ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
-ALTER TABLE presupuestos         ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE ordenes_trabajo       ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE inventario            ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE proveedores           ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE gastos                ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE presupuestos          ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
+ALTER TABLE nomina                ADD COLUMN IF NOT EXISTS empresa_id UUID REFERENCES empresas(id);
 
 -- ── 5. Reemplazar políticas permisivas con filtro por empresa ──
 -- empleados
@@ -134,6 +135,13 @@ CREATE POLICY "empresa_filter" ON gastos FOR ALL TO authenticated
 DROP POLICY IF EXISTS "pres_auth"      ON presupuestos;
 DROP POLICY IF EXISTS "empresa_filter" ON presupuestos;
 CREATE POLICY "empresa_filter" ON presupuestos FOR ALL TO authenticated
+  USING (empresa_id = auth_empresa_id())
+  WITH CHECK (empresa_id = auth_empresa_id());
+
+-- nomina
+DROP POLICY IF EXISTS "nomina_auth"    ON nomina;
+DROP POLICY IF EXISTS "empresa_filter" ON nomina;
+CREATE POLICY "empresa_filter" ON nomina FOR ALL TO authenticated
   USING (empresa_id = auth_empresa_id())
   WITH CHECK (empresa_id = auth_empresa_id());
 

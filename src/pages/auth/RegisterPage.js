@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../../components/ui/Logo';
 import { sanitizeEmail } from '../../lib/sanitize';
+import { supabase } from '../../lib/supabase';
 
 const GIROS = [
   'Tecnología / Software', 'Comercio / Retail', 'Manufactura / Industrial',
@@ -89,17 +90,45 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, password, nombreAdmin, nombreEmpresa, giro, numEmpleados }),
+      // 1. Crear usuario en Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: { data: { nombre: nombreAdmin, empresa: nombreEmpresa } },
       });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setError(data.error || 'Error al registrar. Intenta de nuevo.');
-      } else {
-        setSent(true);
+
+      if (authError) {
+        setError(authError.message.includes('already registered')
+          ? 'Este correo ya está registrado. Intenta iniciar sesión.'
+          : authError.message);
+        setLoading(false);
+        return;
       }
+
+      const userId = authData.user?.id;
+      if (!userId) { setError('No se pudo crear el usuario. Intenta de nuevo.'); setLoading(false); return; }
+
+      // 2. Si hay sesión activa (email confirm desactivado), crear empresa y perfil
+      if (authData.session) {
+        const { data: empresa, error: empError } = await supabase
+          .from('empresas')
+          .insert({ nombre: nombreEmpresa, giro: giro || null, num_empleados: numEmpleados || null, admin_id: userId })
+          .select('id')
+          .single();
+
+        if (empError) {
+          setError('Error al crear la empresa: ' + empError.message);
+          setLoading(false);
+          return;
+        }
+
+        await supabase.from('perfiles').upsert({
+          id: userId, nombre: nombreAdmin, email: cleanEmail,
+          empresa_id: empresa.id, rol: 'admin',
+        });
+      }
+
+      setSent(true);
     } catch {
       setError('Error de conexión. Verifica tu internet e intenta de nuevo.');
     }

@@ -261,16 +261,17 @@ export default function AdminPage() {
   const [newPres, setNewPres]         = useState({});
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setGastos([]); setProveedores([]); setPresupuestos([]); setLoading(false); return; }
     const [{ data:g }, { data:p }, { data:pr }] = await Promise.all([
-      supabase.from('gastos').select('*, proveedores(nombre)').order('fecha', { ascending:false }),
-      supabase.from('proveedores').select('*').order('nombre'),
-      supabase.from('presupuestos').select('*').eq('mes', MES).eq('anio', ANIO),
+      supabase.from('gastos').select('*, proveedores(nombre)').eq('empresa_id', empresaId).order('fecha', { ascending:false }),
+      supabase.from('proveedores').select('*').eq('empresa_id', empresaId).order('nombre'),
+      supabase.from('presupuestos').select('*').eq('empresa_id', empresaId).eq('mes', MES).eq('anio', ANIO),
     ]);
     setGastos(g || []);
     setProveedores(p || []);
     setPresupuestos(pr || []);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

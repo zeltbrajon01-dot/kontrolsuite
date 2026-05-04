@@ -28,6 +28,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 /* ─── Tablas ISR México 2024 (LISR Art. 96) ──────────────── */
 const ISR_TABLA = [
@@ -409,6 +410,7 @@ function EditModal({ record, empleado, onClose, onSaved }) {
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function NominaPage() {
+  const { empresaId } = useAuth();
   const [tab, setTab]               = useState('nomina');
   const [periodo, setPeriodo]       = useState(currentPeriodo());
   const [empleados, setEmpleados]   = useState([]);
@@ -420,27 +422,32 @@ export default function NominaPage() {
 
   /* ── Load empleados ── */
   useEffect(() => {
+    if (!empresaId) { setEmpleados([]); setLoading(false); return; }
     supabase
       .from('empleados')
       .select('id, nombre, apellido, puesto, departamento, sueldo, estado')
+      .eq('empresa_id', empresaId)
       .eq('estado', 'activo')
       .order('nombre')
       .then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
-  }, []);
+  }, [empresaId]);
 
   /* ── Load nomina for current period ── */
   const fetchNomina = useCallback(async () => {
-    const { data } = await supabase.from('nomina').select('*').eq('periodo', periodo).order('created_at');
+    if (!empresaId) { setNominaRecs([]); return; }
+    const { data } = await supabase.from('nomina').select('*').eq('empresa_id', empresaId).eq('periodo', periodo).order('created_at');
     setNominaRecs(data ?? []);
-  }, [periodo]);
+  }, [periodo, empresaId]);
 
   useEffect(() => { fetchNomina(); }, [fetchNomina]);
 
   /* ── Load historial ── */
   const fetchHistorial = useCallback(async () => {
+    if (!empresaId) { setHistorial([]); return; }
     const { data } = await supabase
       .from('nomina')
       .select('periodo, neto_pagar, total_percepciones, estado')
+      .eq('empresa_id', empresaId)
       .order('periodo', { ascending: false });
     if (!data) return;
     const grouped = {};
@@ -451,7 +458,7 @@ export default function NominaPage() {
       if (r.estado === 'pagado') grouped[r.periodo].pagados++;
     });
     setHistorial(Object.values(grouped).sort((a, b) => b.periodo.localeCompare(a.periodo)));
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { if (tab === 'historial') fetchHistorial(); }, [tab, fetchHistorial]);
 
@@ -469,6 +476,7 @@ export default function NominaPage() {
       const total_deducciones  = imss + isr;
       return {
         empleado_id:        emp.id,
+        empresa_id:         empresaId,
         periodo,
         sueldo_base:        Number(emp.sueldo ?? 0),
         bonos:              0,

@@ -299,6 +299,7 @@ function InventarioModal({ item, onSave, onClose }) {
 
 /* ── ProduccionPage ─────────────────────────────────────── */
 export default function ProduccionPage() {
+  const { empresaId } = useAuth();
   const [ordenes, setOrdenes]       = useState([]);
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -309,14 +310,15 @@ export default function ProduccionPage() {
   const [searchInv, setSearchInv]   = useState('');
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setOrdenes([]); setInventario([]); setLoading(false); return; }
     const [{ data:o }, { data:i }] = await Promise.all([
-      supabase.from('ordenes_trabajo').select('*').order('created_at', { ascending:false }),
-      supabase.from('inventario').select('*').order('nombre'),
+      supabase.from('ordenes_trabajo').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
+      supabase.from('inventario').select('*').eq('empresa_id', empresaId).order('nombre'),
     ]);
     setOrdenes(o || []);
     setInventario(i || []);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

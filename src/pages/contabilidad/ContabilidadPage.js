@@ -155,6 +155,7 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
 
 /* ── ContabilidadPage ───────────────────────────────────── */
 export default function ContabilidadPage() {
+  const { empresaId } = useAuth();
   const [movimientos, setMovimientos] = useState([]);
   const [gastos, setGastos]           = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -164,14 +165,15 @@ export default function ContabilidadPage() {
   const [filterMes, setFilterMes]     = useState(isoMonth(new Date()));
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setMovimientos([]); setGastos([]); setLoading(false); return; }
     const [{ data:m }, { data:g }] = await Promise.all([
-      supabase.from('movimientos_contables').select('*').order('fecha', { ascending:false }),
-      supabase.from('gastos').select('area, monto'),
+      supabase.from('movimientos_contables').select('*').eq('empresa_id', empresaId).order('fecha', { ascending:false }),
+      supabase.from('gastos').select('area, monto').eq('empresa_id', empresaId),
     ]);
     setMovimientos(m || []);
     setGastos(g || []);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
