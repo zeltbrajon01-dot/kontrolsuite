@@ -24,6 +24,7 @@ import ContabilidadPage   from './pages/contabilidad/ContabilidadPage';
 import ProduccionPage      from './pages/produccion/ProduccionPage';
 import ComunicacionPage   from './pages/comunicacion/ComunicacionPage';
 import ConfiguracionPage  from './pages/configuracion/ConfiguracionPage';
+import IAPage             from './pages/ia/IAPage';
 
 // Force HTTPS in production (no-op en localhost)
 if (
@@ -61,6 +62,7 @@ export default function App() {
                 <Route path="/contabilidad"   element={<ContabilidadPage />} />
                 <Route path="/produccion"     element={<ProduccionPage />} />
                 <Route path="/configuracion"  element={<ConfiguracionPage />} />
+                <Route path="/ia"             element={<IAPage />} />
               </Route>
             </Route>
 
