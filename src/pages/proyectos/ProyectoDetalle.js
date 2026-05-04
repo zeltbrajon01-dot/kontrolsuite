@@ -147,6 +147,7 @@ const S = {
 
 /* ── TareaModal ─────────────────────────────────────────────── */
 function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
+  const { empresaId } = useAuth();
   const [form,      setForm]      = useState(tarea || EMPTY_TAREA);
   const [saving,    setSaving]    = useState(false);
   const [savedInfo, setSavedInfo] = useState(null); // null = form open | object = success screen
@@ -160,6 +161,7 @@ function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
 
   const handleSave = async () => {
     if (!form.titulo.trim()) return;
+    if (!empresaId) { setSaving(false); return; }
     setSaving(true);
 
     const payload = {
@@ -177,7 +179,7 @@ function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
 
     const isNew = !form.id;
     if (isNew) {
-      await supabase.from('tareas').insert({ ...payload, created_at: new Date().toISOString() });
+      await supabase.from('tareas').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
     } else {
       await supabase.from('tareas').update(payload).eq('id', form.id);
     }

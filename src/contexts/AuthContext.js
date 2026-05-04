@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
   const [empresaId,      setEmpresaId]      = useState(null);
   const [perfil,         setPerfil]         = useState(null);
   const [loading,        setLoading]        = useState(true);
+  const [perfilLoading,  setPerfilLoading]  = useState(false);
   const [sessionWarning, setSessionWarning] = useState(false);
 
   const warnTimer   = useRef(null);
@@ -58,17 +59,25 @@ export function AuthProvider({ children }) {
 
   /* ── Load empresa from perfiles table ────────────────────── */
   const loadPerfil = useCallback(async (userId) => {
+    setPerfilLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('empresa_id, rol, nombre, email')
         .eq('id', userId)
         .single();
-      if (data) {
-        setEmpresaId(data.empresa_id);
+      if (error) {
+        console.error('[AuthContext] loadPerfil:', error.message);
+      } else if (data) {
+        setEmpresaId(data.empresa_id ?? null);
         setPerfil(data);
+        if (!data.empresa_id) console.warn('[AuthContext] Sin empresa_id para usuario:', userId);
       }
-    } catch (_) {}
+    } catch (e) {
+      console.error('[AuthContext] loadPerfil exception:', e.message);
+    } finally {
+      setPerfilLoading(false);
+    }
   }, []);
 
   /* ── Inactivity timers ───────────────────────────────────── */
@@ -141,7 +150,7 @@ export function AuthProvider({ children }) {
   const extendSession = useCallback(() => resetInactivity(), [resetInactivity]);
 
   const value = {
-    user, session, loading,
+    user, session, loading, perfilLoading,
     empresaId, perfil,
     signIn, signUp, signOut, extendSession,
   };

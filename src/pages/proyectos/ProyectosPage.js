@@ -130,6 +130,7 @@ function ProjectModal({ proyecto, onClose, onSaved }) {
     if (!form.nombre.trim()) { setError('El nombre del proyecto es obligatorio.'); return; }
     setSaving(true);
     setError('');
+    if (!empresaId) { setError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       nombre:        form.nombre.trim(),
       cliente:       form.cliente.trim()      || null,

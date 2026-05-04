@@ -130,6 +130,7 @@ function EmpleadoModal({ open, onClose, empleado, onSaved }) {
     e.preventDefault();
     setError('');
     setSaving(true);
+    if (!empresaId) { setError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     try {
       const payload = {
         nombre:       form.nombre.trim(),

@@ -115,6 +115,7 @@ function OrdenModal({ orden, onSave, onClose }) {
     if (!form.numero.trim() || !form.producto.trim()) return;
     setSaving(true);
     setSaveError(null);
+    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       numero: form.numero.trim(), producto: form.producto.trim(),
       cliente: form.cliente || null, cantidad: parseFloat(form.cantidad) || 0,
@@ -225,6 +226,7 @@ function InventarioModal({ item, onSave, onClose }) {
     if (!form.nombre.trim()) return;
     setSaving(true);
     setSaveError(null);
+    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       codigo: form.codigo || null, nombre: form.nombre.trim(),
       descripcion: form.descripcion || null, categoria: form.categoria || null,

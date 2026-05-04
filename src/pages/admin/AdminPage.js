@@ -93,6 +93,7 @@ function GastoModal({ gasto, proveedores, onSave, onClose }) {
     if (!form.concepto.trim() || !form.monto) return;
     setSaving(true);
     setSaveError(null);
+    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       area: form.area, concepto: form.concepto.trim(),
       monto: Number(form.monto), fecha: form.fecha,
@@ -177,6 +178,7 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
     if (!form.nombre.trim()) return;
     setSaving(true);
     setSaveError(null);
+    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       nombre: form.nombre.trim(), rfc: form.rfc || null,
       contacto: form.contacto || null, email: form.email || null,
@@ -288,6 +290,7 @@ export default function AdminPage() {
   };
 
   const savePres = async (area) => {
+    if (!empresaId) { alert('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); return; }
     const monto = Number(newPres[area] || 0);
     const existing = presupuestos.find(p => p.area === area);
     let dbError;

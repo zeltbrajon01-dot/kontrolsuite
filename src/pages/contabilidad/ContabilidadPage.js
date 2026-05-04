@@ -79,6 +79,7 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
     if (!form.descripcion.trim() || !form.monto) return;
     setSaving(true);
     setSaveError(null);
+    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       tipo: form.tipo, categoria: form.categoria,
       descripcion: form.descripcion.trim(), monto: Number(form.monto),
