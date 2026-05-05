@@ -657,10 +657,12 @@ export default function VentasPage() {
       if (c.base_etapa_id) overrideMap[c.base_etapa_id] = c;
       else custom.push(c);
     });
-    const base = ETAPAS_DEFAULT.map(e => {
-      const ov = overrideMap[e.id];
-      return { ...e, label: ov ? ov.label : e.label, _dbId: ov?.id };
-    });
+    const base = ETAPAS_DEFAULT
+      .map(e => {
+        const ov = overrideMap[e.id];
+        return { ...e, label: ov ? ov.label : e.label, _dbId: ov?.id, _hidden: ov?.hidden === true };
+      })
+      .filter(e => !e._hidden); // columnas default marcadas como hidden no se muestran
     return [
       ...base,
       ...custom
@@ -755,11 +757,23 @@ export default function VentasPage() {
 
   const handleDeleteCol = async (col) => {
     setColError(null);
+    console.log('[Pipeline] handleDeleteCol', { col, empresaId });
+
     if (!col._dbId) {
-      setColError(`"${col.label}" es una columna predeterminada del sistema — no se puede eliminar.`);
+      // Columna default sin override — crear registro hidden para ocultarla
+      if (!empresaId) { setColError('Empresa no cargada. Recarga la página.'); return; }
+      const { error: err } = await supabase.from('pipeline_columnas').insert({
+        empresa_id: empresaId, base_etapa_id: col.id,
+        label: col.label, color: col.color, icon: col.icon,
+        orden: 0, hidden: true,
+      });
+      if (err) { console.error('[Pipeline] handleDeleteCol (hide default) error:', err); setColError(`Error al ocultar columna: ${err.message}`); return; }
+      console.log('[Pipeline] handleDeleteCol (hide default) OK — columna ocultada');
+      fetchColumnas();
       return;
     }
-    console.log('[Pipeline] handleDeleteCol', { col, empresaId });
+
+    // Columna con registro en BD (override o custom) — DELETE directo
     const { error: err } = await supabase
       .from('pipeline_columnas').delete().eq('id', col._dbId);
     if (err) { console.error('[Pipeline] handleDeleteCol error:', err); setColError(`Error al eliminar columna: ${err.message}`); return; }

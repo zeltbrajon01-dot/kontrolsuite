@@ -22,6 +22,7 @@ ALTER TABLE pipeline_columnas ADD COLUMN IF NOT EXISTS icon          TEXT DEFAUL
 ALTER TABLE pipeline_columnas ADD COLUMN IF NOT EXISTS color         TEXT DEFAULT '#64748b';
 ALTER TABLE pipeline_columnas ADD COLUMN IF NOT EXISTS orden         INTEGER DEFAULT 0;
 ALTER TABLE pipeline_columnas ADD COLUMN IF NOT EXISTS empresa_id    UUID REFERENCES empresas(id) ON DELETE CASCADE;
+ALTER TABLE pipeline_columnas ADD COLUMN IF NOT EXISTS hidden        BOOLEAN DEFAULT false;
 
 -- ── 3. RLS ────────────────────────────────────────────────────
 ALTER TABLE pipeline_columnas ENABLE ROW LEVEL SECURITY;
