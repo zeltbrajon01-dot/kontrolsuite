@@ -10,7 +10,10 @@
       "Bash(sed -n '1060,1075p' \"C:\\\\Users\\\\zelt_\\\\.claude\\\\projects\\\\c--Users-zelt--Desktop-hellyeah-saas\\\\26d3ecc9-bf84-44c2-8194-69effbd182fc.jsonl\")",
       "Bash(npm install *)",
       "Bash(npm run *)",
-      "Bash(grep -E \"\\\\.\\(env|sql\\)$|package.json\")"
+      "Bash(grep -E \"\\\\.\\(env|sql\\)$|package.json\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
