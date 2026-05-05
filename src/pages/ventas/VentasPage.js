@@ -603,14 +603,12 @@ function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol,
               onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
               ✏️
             </button>
-            {col._custom && (
-              <button onClick={() => setConfirmDelete(true)} title="Eliminar columna"
-                style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', fontSize:11, opacity:.55, padding:'1px 3px', lineHeight:1, color:'#f43f5e' }}
-                onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
-                🗑️
-              </button>
-            )}
+            <button onClick={() => setConfirmDelete(true)} title="Eliminar columna"
+              style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', fontSize:11, opacity:.55, padding:'1px 3px', lineHeight:1, color:'#f43f5e' }}
+              onMouseEnter={e => e.currentTarget.style.opacity='1'}
+              onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
+              🗑️
+            </button>
           </>
         )}
 
@@ -757,7 +755,10 @@ export default function VentasPage() {
 
   const handleDeleteCol = async (col) => {
     setColError(null);
-    if (!col._dbId) return;
+    if (!col._dbId) {
+      setColError(`"${col.label}" es una columna predeterminada del sistema — no se puede eliminar.`);
+      return;
+    }
     console.log('[Pipeline] handleDeleteCol', { col, empresaId });
     const { error: err } = await supabase
       .from('pipeline_columnas').delete().eq('id', col._dbId);

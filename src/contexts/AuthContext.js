@@ -79,16 +79,16 @@ export function AuthProvider({ children }) {
       empId = byAdmin?.id ?? null;
       if (empId) console.log('[AuthContext] autoProvision — empresa existente (byAdmin):', empId);
 
-      // ── Paso 2: perfil existente con empresa (mismo email) ────
+      // ── Paso 2: perfil propio ya tiene empresa_id ─────────────
       if (!empId) {
-        const { data: byEmail } = await supabase
+        const { data: ownPerfil } = await supabase
           .from('perfiles').select('empresa_id')
-          .eq('email', email).not('empresa_id', 'is', null).maybeSingle();
-        empId = byEmail?.empresa_id ?? null;
-        if (empId) console.log('[AuthContext] autoProvision — empresa via email perfil:', empId);
+          .eq('id', userId).not('empresa_id', 'is', null).maybeSingle();
+        empId = ownPerfil?.empresa_id ?? null;
+        if (empId) console.log('[AuthContext] autoProvision — empresa via perfil propio:', empId);
       }
 
-      // ── Paso 3: crear nueva empresa ───────────────────────────
+      // ── Paso 3: crear empresa nueva exclusiva para este usuario
       if (!empId) {
         const { data: nueva, error: empErr } = await supabase
           .from('empresas')
@@ -101,12 +101,8 @@ export function AuthProvider({ children }) {
           .select('id').single();
 
         if (empErr) {
+          // No crear fallback con empresa ajena — es mejor quedar sin empresa que compartir datos
           console.error('[AuthContext] autoProvision INSERT empresa failed:', empErr.message);
-          // ── Paso 4 (fallback): cualquier empresa accesible ────
-          const { data: anyEmp } = await supabase
-            .from('empresas').select('id').limit(1).maybeSingle();
-          empId = anyEmp?.id ?? null;
-          if (empId) console.warn('[AuthContext] autoProvision — empresa fallback:', empId);
         } else {
           empId = nueva.id;
           console.log('[AuthContext] autoProvision — empresa creada:', empId);
