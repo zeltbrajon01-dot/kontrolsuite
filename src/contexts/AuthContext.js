@@ -106,10 +106,11 @@ export function AuthProvider({ children }) {
       } else if (error) {
         console.error('[AuthContext] loadPerfil:', error.message);
       } else if (data) {
+        console.log('[AuthContext] perfil ok — empresa_id:', data.empresa_id, '| rol:', data.rol);
         setEmpresaId(data.empresa_id ?? null);
         setPerfil(data);
         if (!data.empresa_id) {
-          console.warn('[AuthContext] Sin empresa_id para usuario:', userId);
+          console.warn('[AuthContext] empresa_id es null — iniciando auto-provision para:', userId);
           await autoProvisionPerfil(userId);
         }
       }
