@@ -65,20 +65,32 @@ export function AuthProvider({ children }) {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const meta          = authUser?.user_metadata ?? {};
       const email         = authUser?.email          ?? '';
-      const nombre        = meta.nombre              || email.split('@')[0] || 'Admin';
+      const nombre        = meta.nombre              || email.split('@')[0] || 'Usuario';
       const isHellyeah    = email === 'admin@hellyeah.com';
       const empresaNombre = isHellyeah
         ? 'HellYeah'
         : (meta.empresa_nombre || meta.empresa || `Empresa de ${nombre}`);
 
-      // Check if empresa already exists for this admin (idempotent)
-      const { data: existing } = await supabase
+      let empId = null;
+
+      // ── Paso 1: empresa ya creada para este admin_id ─────────
+      const { data: byAdmin } = await supabase
         .from('empresas').select('id').eq('admin_id', userId).maybeSingle();
+      empId = byAdmin?.id ?? null;
+      if (empId) console.log('[AuthContext] autoProvision — empresa existente (byAdmin):', empId);
 
-      let empId = existing?.id ?? null;
-
+      // ── Paso 2: perfil existente con empresa (mismo email) ────
       if (!empId) {
-        const { data: empresa, error: empErr } = await supabase
+        const { data: byEmail } = await supabase
+          .from('perfiles').select('empresa_id')
+          .eq('email', email).not('empresa_id', 'is', null).maybeSingle();
+        empId = byEmail?.empresa_id ?? null;
+        if (empId) console.log('[AuthContext] autoProvision — empresa via email perfil:', empId);
+      }
+
+      // ── Paso 3: crear nueva empresa ───────────────────────────
+      if (!empId) {
+        const { data: nueva, error: empErr } = await supabase
           .from('empresas')
           .insert({
             nombre:        empresaNombre,
@@ -88,16 +100,39 @@ export function AuthProvider({ children }) {
           })
           .select('id').single();
 
-        if (empErr) { console.error('[AuthContext] autoProvision empresa:', empErr.message); return; }
-        empId = empresa.id;
+        if (empErr) {
+          console.error('[AuthContext] autoProvision INSERT empresa failed:', empErr.message);
+          // ── Paso 4 (fallback): cualquier empresa accesible ────
+          const { data: anyEmp } = await supabase
+            .from('empresas').select('id').limit(1).maybeSingle();
+          empId = anyEmp?.id ?? null;
+          if (empId) console.warn('[AuthContext] autoProvision — empresa fallback:', empId);
+        } else {
+          empId = nueva.id;
+          console.log('[AuthContext] autoProvision — empresa creada:', empId);
+        }
       }
 
-      const { data: p } = await supabase.from('perfiles').upsert(
+      if (!empId) {
+        console.error('[AuthContext] autoProvision — no se pudo obtener empresa para:', userId);
+        // Sin empresa todavía — al menos actualizar el perfil sin empresa_id
+        // para no quedar en loop infinito
+        return;
+      }
+
+      const { data: p, error: pErr } = await supabase.from('perfiles').upsert(
         { id: userId, nombre, email, empresa_id: empId, rol: 'admin' },
         { onConflict: 'id' }
       ).select('empresa_id, rol, nombre, email').single();
 
-      if (p) { setEmpresaId(empId); setPerfil(p); }
+      if (pErr) console.error('[AuthContext] autoProvision upsert perfil:', pErr.message);
+      if (p) {
+        setEmpresaId(p.empresa_id);
+        setPerfil(p);
+      } else {
+        // upsert retornó vacío pero tenemos el empId — aplicarlo igual
+        setEmpresaId(empId);
+      }
       console.log('[AuthContext] autoProvision completado — empresa_id:', empId);
     } catch (e) {
       console.error('[AuthContext] autoProvision exception:', e.message);
@@ -113,18 +148,33 @@ export function AuthProvider({ children }) {
         .select('empresa_id, rol, nombre, email')
         .eq('id', userId)
         .single();
+
       if (error?.code === 'PGRST116') {
-        // No perfil found — first login after email confirmation; auto-provision
+        // No perfil — primer login tras confirmación de email
         await autoProvisionPerfil(userId);
       } else if (error) {
-        console.error('[AuthContext] loadPerfil:', error.message);
+        console.error('[AuthContext] loadPerfil error:', error.message);
+        // Intentar provisionar de todas formas
+        await autoProvisionPerfil(userId);
       } else if (data) {
         console.log('[AuthContext] perfil ok — empresa_id:', data.empresa_id, '| rol:', data.rol);
         setEmpresaId(data.empresa_id ?? null);
         setPerfil(data);
+
         if (!data.empresa_id) {
-          console.warn('[AuthContext] empresa_id es null — iniciando auto-provision para:', userId);
-          await autoProvisionPerfil(userId);
+          console.warn('[AuthContext] empresa_id null — buscando empresa para:', userId);
+          // Buscar empresa por admin_id o email antes de crear una nueva
+          const { data: byAdmin } = await supabase
+            .from('empresas').select('id').eq('admin_id', userId).maybeSingle();
+          if (byAdmin?.id) {
+            // Empresa encontrada — vincular al perfil
+            await supabase.from('perfiles').update({ empresa_id: byAdmin.id }).eq('id', userId);
+            setEmpresaId(byAdmin.id);
+            setPerfil(p => ({ ...p, empresa_id: byAdmin.id }));
+            console.log('[AuthContext] empresa vinculada por admin_id:', byAdmin.id);
+          } else {
+            await autoProvisionPerfil(userId);
+          }
         }
       }
     } catch (e) {
