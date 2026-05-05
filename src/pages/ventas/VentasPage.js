@@ -522,15 +522,17 @@ function LeadCard({ lead, col, dragRef, onEdit, onNewCot, onInlineSave }) {
 }
 
 /* ── KanbanCol ──────────────────────────────────────────── */
-function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol, onInlineSave }) {
-  const [over,         setOver]         = useState(false);
-  const [editingLabel, setEditingLabel] = useState(false);
-  const [labelDraft,   setLabelDraft]   = useState(col.label);
+function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol, onDeleteCol, onInlineSave }) {
+  const [over,          setOver]          = useState(false);
+  const [editingLabel,  setEditingLabel]  = useState(false);
+  const [labelDraft,    setLabelDraft]    = useState(col.label);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => { setLabelDraft(col.label); }, [col.label]);
 
   const openEdit = () => {
+    setConfirmDelete(false);
     setEditingLabel(true);
     setTimeout(() => inputRef.current?.select(), 0);
   };
@@ -549,8 +551,28 @@ function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol,
       onDrop={() => { setOver(false); onDrop(col.id); }}>
 
       {/* Header */}
-      <div style={{ display:'flex', alignItems:'center', gap:6, paddingBottom:10, marginBottom:8, borderBottom:`2px solid ${col.color}` }}>
-        {editingLabel ? (
+      <div
+        style={{ display:'flex', alignItems:'center', gap:5, paddingBottom:10, marginBottom:8, borderBottom:`2px solid ${col.color}` }}
+        onMouseLeave={() => setConfirmDelete(false)}>
+
+        {confirmDelete ? (
+          /* Inline delete confirmation */
+          <div style={{ display:'flex', alignItems:'center', gap:5, flex:1, minWidth:0 }}>
+            <span style={{ flex:1, fontSize:10, fontWeight:700, color:'#f43f5e', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              ¿Borrar «{col.label}»?
+            </span>
+            <button
+              onClick={() => setConfirmDelete(false)}
+              style={{ flexShrink:0, fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--hy-border)', background:'transparent', color:'var(--hy-text3)', cursor:'pointer', fontFamily:'Montserrat, sans-serif', fontWeight:600 }}>
+              No
+            </button>
+            <button
+              onClick={() => { setConfirmDelete(false); onDeleteCol(col); }}
+              style={{ flexShrink:0, fontSize:10, padding:'2px 8px', borderRadius:5, border:'none', background:'#f43f5e', color:'#fff', cursor:'pointer', fontFamily:'Montserrat, sans-serif', fontWeight:700 }}>
+              Borrar
+            </button>
+          </div>
+        ) : editingLabel ? (
           <input
             ref={inputRef}
             value={labelDraft}
@@ -570,13 +592,29 @@ function KanbanCol({ col, leads, dragRef, onDrop, onEdit, onNewCot, onRenameCol,
             {col.icon} {col.label}
           </span>
         )}
-        <button onClick={openEdit} title="Renombrar columna"
-          style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', fontSize:11, opacity:.55, padding:'1px 3px', lineHeight:1, color:col.color }}
-          onMouseEnter={e => e.currentTarget.style.opacity='1'}
-          onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
-          ✏️
-        </button>
-        <span style={{ flexShrink:0, background:`${col.color}22`, color:col.color, borderRadius:12, fontSize:11, fontWeight:700, padding:'2px 7px' }}>{leads.length}</span>
+
+        {!confirmDelete && !editingLabel && (
+          <>
+            <button onClick={openEdit} title="Renombrar columna"
+              style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', fontSize:11, opacity:.55, padding:'1px 3px', lineHeight:1, color:col.color }}
+              onMouseEnter={e => e.currentTarget.style.opacity='1'}
+              onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
+              ✏️
+            </button>
+            {col._custom && (
+              <button onClick={() => setConfirmDelete(true)} title="Eliminar columna"
+                style={{ flexShrink:0, background:'none', border:'none', cursor:'pointer', fontSize:11, opacity:.55, padding:'1px 3px', lineHeight:1, color:'#f43f5e' }}
+                onMouseEnter={e => e.currentTarget.style.opacity='1'}
+                onMouseLeave={e => e.currentTarget.style.opacity='.55'}>
+                🗑️
+              </button>
+            )}
+          </>
+        )}
+
+        {!confirmDelete && (
+          <span style={{ flexShrink:0, background:`${col.color}22`, color:col.color, borderRadius:12, fontSize:11, fontWeight:700, padding:'2px 7px' }}>{leads.length}</span>
+        )}
       </div>
 
       {/* Cards */}
@@ -632,7 +670,12 @@ export default function VentasPage() {
   }, [columnas]);
 
   const fetchColumnas = useCallback(async () => {
-    const { data, error } = await ef(supabase.from('pipeline_columnas').select('*')).order('orden');
+    // Never show other companies' columns — strict empresa filter for regular users
+    if (!isSuperAdmin && !empresaId) { setColumnas([]); return; }
+    const q = isSuperAdmin
+      ? supabase.from('pipeline_columnas').select('*')
+      : supabase.from('pipeline_columnas').select('*').eq('empresa_id', empresaId);
+    const { data, error } = await q.order('orden');
     if (error) console.error('[Pipeline] fetchColumnas error:', error);
     else console.log('[Pipeline] fetchColumnas ok — rows:', data?.length, '| empresaId:', empresaId);
     setColumnas(data || []);
@@ -709,6 +752,19 @@ export default function VentasPage() {
     fetchColumnas();
   };
 
+  const handleDeleteCol = async (col) => {
+    setColError(null);
+    if (!col._dbId) return;
+    console.log('[Pipeline] handleDeleteCol', { col, empresaId });
+    const { error: err } = await supabase
+      .from('pipeline_columnas').delete().eq('id', col._dbId);
+    if (err) { console.error('[Pipeline] handleDeleteCol error:', err); setColError(`Error al eliminar columna: ${err.message}`); return; }
+    console.log('[Pipeline] handleDeleteCol OK');
+    // Move leads in that column to first default stage so they don't disappear
+    setLeads(ls => ls.map(l => l.etapa === col.id ? { ...l, etapa: 'nuevo' } : l));
+    fetchColumnas();
+  };
+
   const ganados      = leads.filter(l => l.etapa === 'ganado');
   const enPipeline   = leads.filter(l => !['ganado','perdido'].includes(l.etapa));
   const valorPipeline = enPipeline.reduce((s, l) => s + (l.valor || 0), 0);
@@ -770,6 +826,7 @@ export default function VentasPage() {
                 onEdit={l => setModalLead(l)}
                 onNewCot={l => setModalCot({ ...EMPTY_COT, cliente: l.empresa || l.nombre, lead_id: l.id })}
                 onRenameCol={handleRenameCol}
+                onDeleteCol={handleDeleteCol}
                 onInlineSave={handleInlineSave}
               />
             ))}
