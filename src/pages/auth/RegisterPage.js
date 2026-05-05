@@ -90,20 +90,11 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      // 1. Crear usuario en Supabase Auth (metadata guardado para auto-provisioning en primer login)
+      // 1. Crear usuario en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
-        options: {
-          data: {
-            nombre:                nombreAdmin,
-            empresa_nombre:        nombreEmpresa,
-            empresa_giro:          giro          || null,
-            empresa_num_empleados: numEmpleados  || null,
-            // legacy key kept for compatibility
-            empresa:               nombreEmpresa,
-          },
-        },
+        options: { data: { nombre: nombreAdmin, empresa: nombreEmpresa } },
       });
 
       if (authError) {
@@ -117,34 +108,24 @@ export default function RegisterPage() {
       const userId = authData.user?.id;
       if (!userId) { setError('No se pudo crear el usuario. Intenta de nuevo.'); setLoading(false); return; }
 
-      // 2. Crear empresa única para este usuario
-      // Con sesión activa (email confirm desactivado): INSERT funciona de inmediato.
-      // Sin sesión (email confirm activado): INSERT falla por RLS — AuthContext lo crea en el primer login.
-      const { data: empresa, error: empError } = await supabase
-        .from('empresas')
-        .insert({
-          nombre:        nombreEmpresa,
-          giro:          giro          || null,
-          num_empleados: numEmpleados  || null,
-          admin_id:      userId,
-        })
-        .select('id')
-        .single();
+      // 2. Si hay sesión activa (email confirm desactivado), crear empresa y perfil
+      if (authData.session) {
+        const { data: empresa, error: empError } = await supabase
+          .from('empresas')
+          .insert({ nombre: nombreEmpresa, giro: giro || null, num_empleados: numEmpleados || null, admin_id: userId })
+          .select('id')
+          .single();
 
-      if (empError) {
-        // RLS lo bloqueó (sin sesión) — AuthContext provisionará con el mismo nombre en el primer login
-        console.log('[RegisterPage] empresa INSERT pendiente para primer login — userId:', userId, '| error:', empError.message);
-      } else if (empresa) {
-        // Sesión activa — crear perfil de inmediato con empresa_id único
-        const { error: perfError } = await supabase.from('perfiles').upsert(
-          { id: userId, nombre: nombreAdmin, email: cleanEmail, empresa_id: empresa.id, rol: 'admin' },
-          { onConflict: 'id' }
-        );
-        if (perfError) {
-          console.error('[RegisterPage] perfil upsert error:', perfError.message);
-        } else {
-          console.log('[RegisterPage] empresa + perfil creados — empresa_id:', empresa.id);
+        if (empError) {
+          setError('Error al crear la empresa: ' + empError.message);
+          setLoading(false);
+          return;
         }
+
+        await supabase.from('perfiles').upsert({
+          id: userId, nombre: nombreAdmin, email: cleanEmail,
+          empresa_id: empresa.id, rol: 'admin',
+        });
       }
 
       setSent(true);

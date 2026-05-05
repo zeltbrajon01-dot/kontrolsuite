@@ -147,7 +147,6 @@ const S = {
 
 /* ── TareaModal ─────────────────────────────────────────────── */
 function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
-  const { empresaId } = useAuth();
   const [form,      setForm]      = useState(tarea || EMPTY_TAREA);
   const [saving,    setSaving]    = useState(false);
   const [savedInfo, setSavedInfo] = useState(null); // null = form open | object = success screen
@@ -161,7 +160,6 @@ function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
 
   const handleSave = async () => {
     if (!form.titulo.trim()) return;
-    if (!empresaId) { setSaving(false); return; }
     setSaving(true);
 
     const payload = {
@@ -179,7 +177,7 @@ function TareaModal({ tarea, proyectoId, proyectoNombre, onSave, onClose }) {
 
     const isNew = !form.id;
     if (isNew) {
-      await supabase.from('tareas').insert({ ...payload, empresa_id: empresaId, created_at: new Date().toISOString() });
+      await supabase.from('tareas').insert({ ...payload, created_at: new Date().toISOString() });
     } else {
       await supabase.from('tareas').update(payload).eq('id', form.id);
     }
@@ -421,8 +419,7 @@ function KanbanColumn({ col, tareas, dragRef, onEdit, onAddNew, onDrop }) {
 
 /* ── ProyectoDetalle ────────────────────────────────────────── */
 export default function ProyectoDetalle() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const { id } = useParams();
   const [proyecto, setProyecto] = useState(null);
   const [tareas, setTareas] = useState([]);
@@ -437,9 +434,10 @@ export default function ProyectoDetalle() {
   }, [id]);
 
   const fetchTareas = useCallback(async () => {
-    const { data } = await ef(supabase.from('tareas').select('*').eq('proyecto_id', id)).order('created_at');
+    if (!empresaId) { setTareas([]); return; }
+    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId).order('created_at');
     setTareas(data || []);
-  }, [id, empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [id, empresaId]);
 
   useEffect(() => {
     Promise.all([fetchProyecto(), fetchTareas()]).finally(() => setLoading(false));
@@ -457,9 +455,9 @@ export default function ProyectoDetalle() {
   const handleSaveTarea = useCallback(async () => {
     setModalTarea(null);
     await fetchTareas();
-    const { data } = await ef(supabase.from('tareas').select('*').eq('proyecto_id', id));
+    const { data } = await supabase.from('tareas').select('*').eq('proyecto_id', id).eq('empresa_id', empresaId);
     if (data) updateProgreso(data);
-  }, [fetchTareas, id, updateProgreso, empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [fetchTareas, id, updateProgreso, empresaId]);
 
   const handleDrop = useCallback(async (colId) => {
     const tareaId = dragRef.current;

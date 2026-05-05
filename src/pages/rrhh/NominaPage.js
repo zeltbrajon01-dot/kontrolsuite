@@ -209,7 +209,6 @@ function generarPDF(rec, emp) {
 /* ═══════════════════════════════════════════════════════════ */
 function EditModal({ record, empleado, onClose, onSaved }) {
   const isNew = !record?.id;
-  const { empresaId } = useAuth();
 
   const [form, setForm] = useState({
     sueldo_base:       record?.sueldo_base      ?? empleado?.sueldo ?? 0,
@@ -245,7 +244,6 @@ function EditModal({ record, empleado, onClose, onSaved }) {
   async function save() {
     setSaving(true);
     setError('');
-    if (!empresaId) { setError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       empleado_id:        empleado.id,
       periodo:            record.periodo,
@@ -266,7 +264,7 @@ function EditModal({ record, empleado, onClose, onSaved }) {
     let dbError;
     if (isNew) {
       ({ error: dbError } = await supabase.from('nomina').upsert(
-        { ...payload, empresa_id: empresaId, created_at: new Date().toISOString() },
+        { ...payload, created_at: new Date().toISOString() },
         { onConflict: 'empleado_id,periodo' }
       ));
     } else {
@@ -412,8 +410,7 @@ function EditModal({ record, empleado, onClose, onSaved }) {
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function NominaPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [tab, setTab]               = useState('nomina');
   const [periodo, setPeriodo]       = useState(currentPeriodo());
   const [empleados, setEmpleados]   = useState([]);
@@ -425,17 +422,22 @@ export default function NominaPage() {
 
   /* ── Load empleados ── */
   useEffect(() => {
-    ef(supabase.from('empleados').select('id, nombre, apellido, puesto, departamento, sueldo, estado'))
+    if (!empresaId) { setEmpleados([]); setLoading(false); return; }
+    supabase
+      .from('empleados')
+      .select('id, nombre, apellido, puesto, departamento, sueldo, estado')
+      .eq('empresa_id', empresaId)
       .eq('estado', 'activo')
       .order('nombre')
       .then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [empresaId]);
 
   /* ── Load nomina for current period ── */
   const fetchNomina = useCallback(async () => {
-    const { data } = await ef(supabase.from('nomina').select('*')).eq('periodo', periodo).order('created_at');
+    if (!empresaId) { setNominaRecs([]); return; }
+    const { data } = await supabase.from('nomina').select('*').eq('empresa_id', empresaId).eq('periodo', periodo).order('created_at');
     setNominaRecs(data ?? []);
-  }, [periodo, empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [periodo, empresaId]);
 
   useEffect(() => { fetchNomina(); }, [fetchNomina]);
 

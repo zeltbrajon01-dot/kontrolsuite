@@ -130,7 +130,6 @@ function ProjectModal({ proyecto, onClose, onSaved }) {
     if (!form.nombre.trim()) { setError('El nombre del proyecto es obligatorio.'); return; }
     setSaving(true);
     setError('');
-    if (!empresaId) { setError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       nombre:        form.nombre.trim(),
       cliente:       form.cliente.trim()      || null,
@@ -276,8 +275,7 @@ function ProjectModal({ proyecto, onClose, onSaved }) {
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function ProyectosPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [proyectos, setProyectos] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [view, setView]           = useState('tarjetas');
@@ -287,9 +285,10 @@ export default function ProyectosPage() {
   const [tareasStats, setTareasStats] = useState({ completado:0, en_proceso:0, pendiente:0 });
 
   const fetchProyectos = useCallback(async () => {
+    if (!empresaId) { setProyectos([]); setLoading(false); return; }
     const [{ data: pData }, { data: tData }] = await Promise.all([
-      ef(supabase.from('proyectos').select('*')).order('created_at', { ascending: false }),
-      ef(supabase.from('tareas').select('estado')),
+      supabase.from('proyectos').select('*').eq('empresa_id', empresaId).order('created_at', { ascending: false }),
+      supabase.from('tareas').select('estado').eq('empresa_id', empresaId),
     ]);
     setProyectos(pData ?? []);
     if (tData) {
@@ -298,7 +297,7 @@ export default function ProyectosPage() {
       setTareasStats(s);
     }
     setLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [empresaId]);
 
   useEffect(() => { fetchProyectos(); }, [fetchProyectos]);
 

@@ -93,7 +93,6 @@ function GastoModal({ gasto, proveedores, onSave, onClose }) {
     if (!form.concepto.trim() || !form.monto) return;
     setSaving(true);
     setSaveError(null);
-    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       area: form.area, concepto: form.concepto.trim(),
       monto: Number(form.monto), fecha: form.fecha,
@@ -178,7 +177,6 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
     if (!form.nombre.trim()) return;
     setSaving(true);
     setSaveError(null);
-    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       nombre: form.nombre.trim(), rfc: form.rfc || null,
       contacto: form.contacto || null, email: form.email || null,
@@ -251,8 +249,7 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
 
 /* ── AdminPage ──────────────────────────────────────────── */
 export default function AdminPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [gastos, setGastos]           = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
@@ -264,16 +261,17 @@ export default function AdminPage() {
   const [newPres, setNewPres]         = useState({});
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setGastos([]); setProveedores([]); setPresupuestos([]); setLoading(false); return; }
     const [{ data:g }, { data:p }, { data:pr }] = await Promise.all([
-      ef(supabase.from('gastos').select('*, proveedores(nombre)')).order('fecha', { ascending:false }),
-      ef(supabase.from('proveedores').select('*')).order('nombre'),
-      ef(supabase.from('presupuestos').select('*')).eq('mes', MES).eq('anio', ANIO),
+      supabase.from('gastos').select('*, proveedores(nombre)').eq('empresa_id', empresaId).order('fecha', { ascending:false }),
+      supabase.from('proveedores').select('*').eq('empresa_id', empresaId).order('nombre'),
+      supabase.from('presupuestos').select('*').eq('empresa_id', empresaId).eq('mes', MES).eq('anio', ANIO),
     ]);
     setGastos(g || []);
     setProveedores(p || []);
     setPresupuestos(pr || []);
     setLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -290,7 +288,6 @@ export default function AdminPage() {
   };
 
   const savePres = async (area) => {
-    if (!empresaId) { alert('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); return; }
     const monto = Number(newPres[area] || 0);
     const existing = presupuestos.find(p => p.area === area);
     let dbError;

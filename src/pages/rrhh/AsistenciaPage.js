@@ -21,7 +21,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
 
 /* ─── Constants ───────────────────────────────────────────── */
 const ESTADO_CFG = {
@@ -322,8 +321,6 @@ function RegistroModal({ empleados, preEmp, preFecha, preRecord, onClose, onSave
 /*  MAIN PAGE                                                  */
 /* ═══════════════════════════════════════════════════════════ */
 export default function AsistenciaPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-
   const [tab, setTab]             = useState('hoy');
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -349,58 +346,56 @@ export default function AsistenciaPage() {
   const [justModal, setJustModal] = useState(null);
   const [regModal, setRegModal]   = useState(null);
 
-  /* ── Load empleados — filtered by empresa_id ── */
+  /* ── Load empleados ── */
   useEffect(() => {
-    console.log('[Asistencia] cargando empleados — empresa:', empresaId);
-    const q = (!isSuperAdmin && empresaId)
-      ? supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo').eq('empresa_id', empresaId)
-      : supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo');
-    q.order('nombre').then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
+    supabase
+      .from('empleados')
+      .select('id, nombre, apellido, departamento')
+      .eq('estado', 'activo')
+      .order('nombre')
+      .then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
+  }, []);
 
-  /* ── Fetch today — filter by empleado_id (asistencias has no empresa_id column) ── */
+  /* ── Fetch today ── */
   const fetchHoy = useCallback(async () => {
     setTodayLoading(true);
-    const empIds = empleados.map(e => e.id);
-    if (!isSuperAdmin && empIds.length === 0) { setTodayRecs([]); setTodayLoading(false); return; }
-    let q = supabase.from('asistencias').select('*').eq('fecha', todayIso());
-    if (!isSuperAdmin && empIds.length > 0) q = q.in('empleado_id', empIds);
-    const { data } = await q;
+    const { data } = await supabase
+      .from('asistencias')
+      .select('*')
+      .eq('fecha', todayIso());
     setTodayRecs(data ?? []);
     setTodayLoading(false);
-  }, [empleados, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => { if (tab === 'hoy') fetchHoy(); }, [tab, fetchHoy]);
 
-  /* ── Fetch calendar month — calEmp is already from this company's employees ── */
+  /* ── Fetch calendar month ── */
   const fetchCal = useCallback(async () => {
     if (!calEmp) { setCalRecs([]); return; }
     const { from, to } = monthRange(calYear, calMonth);
-    const { data } = await supabase.from('asistencias').select('*')
-      .eq('empleado_id', calEmp).gte('fecha', from).lte('fecha', to);
+    const { data } = await supabase
+      .from('asistencias')
+      .select('*')
+      .eq('empleado_id', calEmp)
+      .gte('fecha', from)
+      .lte('fecha', to);
     setCalRecs(data ?? []);
   }, [calEmp, calYear, calMonth]);
 
   useEffect(() => { if (tab === 'calendario') fetchCal(); }, [tab, calEmp, calYear, calMonth, fetchCal]);
 
-  /* ── Fetch report — filter by empleado_id list when no specific employee ── */
+  /* ── Fetch report ── */
   const fetchRep = useCallback(async () => {
     const { from, to } = monthRange(repYear, repMonth);
     let q = supabase.from('asistencias').select('*').gte('fecha', from).lte('fecha', to).order('fecha');
-    if (repEmp) {
-      q = q.eq('empleado_id', repEmp);
-    } else if (!isSuperAdmin) {
-      const empIds = empleados.map(e => e.id);
-      if (empIds.length === 0) { setRepRecs([]); return; }
-      q = q.in('empleado_id', empIds);
-    }
+    if (repEmp) q = q.eq('empleado_id', repEmp);
     const { data } = await q;
     const empMap = Object.fromEntries(empleados.map((e) => [e.id, e]));
     setRepRecs((data ?? []).map((r) => ({
       ...r,
       _nombre: empMap[r.empleado_id] ? `${empMap[r.empleado_id].nombre} ${empMap[r.empleado_id].apellido}` : '—',
     })));
-  }, [repEmp, repYear, repMonth, empleados, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [repEmp, repYear, repMonth, empleados]);
 
   useEffect(() => { if (tab === 'reporte' && empleados.length) fetchRep(); }, [tab, repEmp, repYear, repMonth, empleados, fetchRep]);
 

@@ -79,7 +79,6 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
     if (!form.descripcion.trim() || !form.monto) return;
     setSaving(true);
     setSaveError(null);
-    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       tipo: form.tipo, categoria: form.categoria,
       descripcion: form.descripcion.trim(), monto: Number(form.monto),
@@ -156,8 +155,7 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
 
 /* ── ContabilidadPage ───────────────────────────────────── */
 export default function ContabilidadPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [movimientos, setMovimientos] = useState([]);
   const [gastos, setGastos]           = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -167,14 +165,15 @@ export default function ContabilidadPage() {
   const [filterMes, setFilterMes]     = useState(isoMonth(new Date()));
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setMovimientos([]); setGastos([]); setLoading(false); return; }
     const [{ data:m }, { data:g }] = await Promise.all([
-      ef(supabase.from('movimientos_contables').select('*')).order('fecha', { ascending:false }),
-      ef(supabase.from('gastos').select('area, monto')),
+      supabase.from('movimientos_contables').select('*').eq('empresa_id', empresaId).order('fecha', { ascending:false }),
+      supabase.from('gastos').select('area, monto').eq('empresa_id', empresaId),
     ]);
     setMovimientos(m || []);
     setGastos(g || []);
     setLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

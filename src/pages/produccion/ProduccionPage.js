@@ -115,7 +115,6 @@ function OrdenModal({ orden, onSave, onClose }) {
     if (!form.numero.trim() || !form.producto.trim()) return;
     setSaving(true);
     setSaveError(null);
-    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       numero: form.numero.trim(), producto: form.producto.trim(),
       cliente: form.cliente || null, cantidad: parseFloat(form.cantidad) || 0,
@@ -226,7 +225,6 @@ function InventarioModal({ item, onSave, onClose }) {
     if (!form.nombre.trim()) return;
     setSaving(true);
     setSaveError(null);
-    if (!empresaId) { setSaveError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     const payload = {
       codigo: form.codigo || null, nombre: form.nombre.trim(),
       descripcion: form.descripcion || null, categoria: form.categoria || null,
@@ -301,8 +299,7 @@ function InventarioModal({ item, onSave, onClose }) {
 
 /* ── ProduccionPage ─────────────────────────────────────── */
 export default function ProduccionPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [ordenes, setOrdenes]       = useState([]);
   const [inventario, setInventario] = useState([]);
   const [loading, setLoading]       = useState(true);
@@ -313,14 +310,15 @@ export default function ProduccionPage() {
   const [searchInv, setSearchInv]   = useState('');
 
   const fetchAll = useCallback(async () => {
+    if (!empresaId) { setOrdenes([]); setInventario([]); setLoading(false); return; }
     const [{ data:o }, { data:i }] = await Promise.all([
-      ef(supabase.from('ordenes_trabajo').select('*')).order('created_at', { ascending:false }),
-      ef(supabase.from('inventario').select('*')).order('nombre'),
+      supabase.from('ordenes_trabajo').select('*').eq('empresa_id', empresaId).order('created_at', { ascending:false }),
+      supabase.from('inventario').select('*').eq('empresa_id', empresaId).order('nombre'),
     ]);
     setOrdenes(o || []);
     setInventario(i || []);
     setLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [empresaId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

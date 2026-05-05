@@ -130,7 +130,6 @@ function EmpleadoModal({ open, onClose, empleado, onSaved }) {
     e.preventDefault();
     setError('');
     setSaving(true);
-    if (!empresaId) { setError('Tu cuenta no tiene empresa asignada. Contacta al administrador.'); setSaving(false); return; }
     try {
       const payload = {
         nombre:       form.nombre.trim(),
@@ -408,8 +407,7 @@ function Field({ label, children }) {
 /*  PÁGINA PRINCIPAL                                          */
 /* ══════════════════════════════════════════════════════════ */
 export default function RRHHPage() {
-  const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
+  const { empresaId } = useAuth();
   const [empleados, setEmpleados]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [modalOpen, setModalOpen]   = useState(false);
@@ -427,6 +425,7 @@ export default function RRHHPage() {
 
   /* ── Carga de datos ── */
   const fetchEmpleados = useCallback(async () => {
+    if (!empresaId) { setEmpleados([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('empleados')
@@ -435,7 +434,7 @@ export default function RRHHPage() {
       .order('created_at', { ascending: false });
     if (!error && data) setEmpleados(data);
     setLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line
+  }, [empresaId]);
 
   useEffect(() => { fetchEmpleados(); }, [fetchEmpleados]);
 
@@ -473,7 +472,7 @@ export default function RRHHPage() {
     setRepLoading(true);
     const now  = new Date();
     const from = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split('T')[0];
-    const { data } = await ef(supabase.from('asistencias').select('fecha, estado')).gte('fecha', from);
+    const { data } = await supabase.from('asistencias').select('fecha, estado').gte('fecha', from);
     const months = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -486,7 +485,7 @@ export default function RRHHPage() {
     });
     setAsistData(months);
     setRepLoading(false);
-  }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => { if (showRep) loadRep(); }, [showRep, loadRep]);
 

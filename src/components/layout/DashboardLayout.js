@@ -111,7 +111,7 @@ function NavItem({ to, label, icon, end, collapsed, onNavigate }) {
 
 /* ─── Layout principal ───────────────────────────────────────── */
 export default function DashboardLayout() {
-  const { user, signOut, perfilLoading } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -202,7 +202,7 @@ export default function DashboardLayout() {
         overflow: 'hidden',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: collapsed && !isMobile ? '24px 14px 16px' : '24px 20px 16px', borderBottom: '1px solid var(--hy-border)', flexShrink: 0 }}>
+        <div style={{ height: 64, display: 'flex', alignItems: 'center', padding: collapsed && !isMobile ? '0 14px' : '0 20px', borderBottom: '1px solid var(--hy-border)', flexShrink: 0 }}>
           <Logo size="sm" collapsed={collapsed && !isMobile} variant="auto" />
         </div>
 
@@ -385,15 +385,7 @@ export default function DashboardLayout() {
 
         {/* ── CONTENIDO ── */}
         <main style={{ flex: 1, overflowY: 'auto', padding: 28, backgroundColor: 'var(--hy-bg-main)' }}>
-          {perfilLoading ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:16 }}>
-              <div style={{ width:36, height:36, border:'3px solid var(--hy-border)', borderTopColor:'var(--hy-brand)', borderRadius:'50%', animation:'hy-spin 0.8s linear infinite' }} />
-              <p style={{ margin:0, fontSize:14, color:'var(--hy-text3)', fontFamily:'Montserrat, sans-serif' }}>Cargando…</p>
-              <style>{`@keyframes hy-spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : (
-            <Outlet />
-          )}
+          <Outlet />
         </main>
       </div>
 
