@@ -422,7 +422,7 @@ function KanbanColumn({ col, tareas, dragRef, onEdit, onAddNew, onDrop }) {
 /* ── ProyectoDetalle ────────────────────────────────────────── */
 export default function ProyectoDetalle() {
   const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
   const { id } = useParams();
   const [proyecto, setProyecto] = useState(null);
   const [tareas, setTareas] = useState([]);
@@ -437,7 +437,6 @@ export default function ProyectoDetalle() {
   }, [id]);
 
   const fetchTareas = useCallback(async () => {
-    if (!isSuperAdmin && !empresaId) { setTareas([]); return; }
     const { data } = await ef(supabase.from('tareas').select('*').eq('proyecto_id', id)).order('created_at');
     setTareas(data || []);
   }, [id, empresaId, isSuperAdmin]); // eslint-disable-line

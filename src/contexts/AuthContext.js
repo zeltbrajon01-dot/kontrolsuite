@@ -64,28 +64,41 @@ export function AuthProvider({ children }) {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       const meta          = authUser?.user_metadata ?? {};
-      const nombre        = meta.nombre              || authUser?.email?.split('@')[0] || 'Admin';
       const email         = authUser?.email          ?? '';
-      const empresaNombre = meta.empresa_nombre      || meta.empresa || `Empresa de ${nombre}`;
+      const nombre        = meta.nombre              || email.split('@')[0] || 'Admin';
+      const isHellyeah    = email === 'admin@hellyeah.com';
+      const empresaNombre = isHellyeah
+        ? 'HellYeah'
+        : (meta.empresa_nombre || meta.empresa || `Empresa de ${nombre}`);
 
-      const { data: empresa, error: empErr } = await supabase
-        .from('empresas')
-        .insert({
-          nombre:        empresaNombre,
-          giro:          meta.empresa_giro          || null,
-          num_empleados: meta.empresa_num_empleados || null,
-          admin_id:      userId,
-        })
-        .select('id').single();
+      // Check if empresa already exists for this admin (idempotent)
+      const { data: existing } = await supabase
+        .from('empresas').select('id').eq('admin_id', userId).maybeSingle();
 
-      if (empErr) { console.error('[AuthContext] autoProvision empresa:', empErr.message); return; }
+      let empId = existing?.id ?? null;
+
+      if (!empId) {
+        const { data: empresa, error: empErr } = await supabase
+          .from('empresas')
+          .insert({
+            nombre:        empresaNombre,
+            giro:          meta.empresa_giro          || null,
+            num_empleados: meta.empresa_num_empleados || null,
+            admin_id:      userId,
+          })
+          .select('id').single();
+
+        if (empErr) { console.error('[AuthContext] autoProvision empresa:', empErr.message); return; }
+        empId = empresa.id;
+      }
 
       const { data: p } = await supabase.from('perfiles').upsert(
-        { id: userId, nombre, email, empresa_id: empresa.id, rol: 'admin' },
+        { id: userId, nombre, email, empresa_id: empId, rol: 'admin' },
         { onConflict: 'id' }
       ).select('empresa_id, rol, nombre, email').single();
 
-      if (p) { setEmpresaId(empresa.id); setPerfil(p); }
+      if (p) { setEmpresaId(empId); setPerfil(p); }
+      console.log('[AuthContext] autoProvision completado — empresa_id:', empId);
     } catch (e) {
       console.error('[AuthContext] autoProvision exception:', e.message);
     }

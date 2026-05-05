@@ -252,7 +252,7 @@ function ProveedorModal({ proveedor, onSave, onClose }) {
 /* ── AdminPage ──────────────────────────────────────────── */
 export default function AdminPage() {
   const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
   const [gastos, setGastos]           = useState([]);
   const [proveedores, setProveedores] = useState([]);
   const [presupuestos, setPresupuestos] = useState([]);
@@ -264,7 +264,6 @@ export default function AdminPage() {
   const [newPres, setNewPres]         = useState({});
 
   const fetchAll = useCallback(async () => {
-    if (!isSuperAdmin && !empresaId) { setGastos([]); setProveedores([]); setPresupuestos([]); setLoading(false); return; }
     const [{ data:g }, { data:p }, { data:pr }] = await Promise.all([
       ef(supabase.from('gastos').select('*, proveedores(nombre)')).order('fecha', { ascending:false }),
       ef(supabase.from('proveedores').select('*')).order('nombre'),

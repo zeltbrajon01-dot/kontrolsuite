@@ -351,11 +351,10 @@ export default function AsistenciaPage() {
 
   /* ── Load empleados — filtered by empresa_id ── */
   useEffect(() => {
-    if (!isSuperAdmin && !empresaId) { setEmpleados([]); setLoading(false); return; }
     console.log('[Asistencia] cargando empleados — empresa:', empresaId);
-    const q = isSuperAdmin
-      ? supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo')
-      : supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo').eq('empresa_id', empresaId);
+    const q = (!isSuperAdmin && empresaId)
+      ? supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo').eq('empresa_id', empresaId)
+      : supabase.from('empleados').select('id, nombre, apellido, departamento').eq('estado', 'activo');
     q.order('nombre').then(({ data }) => { setEmpleados(data ?? []); setLoading(false); });
   }, [empresaId, isSuperAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 

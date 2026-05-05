@@ -117,25 +117,20 @@ export default function RegisterPage() {
       const userId = authData.user?.id;
       if (!userId) { setError('No se pudo crear el usuario. Intenta de nuevo.'); setLoading(false); return; }
 
-      // 2. Si hay sesión activa (email confirm desactivado), crear empresa y perfil
-      if (authData.session) {
-        const { data: empresa, error: empError } = await supabase
-          .from('empresas')
-          .insert({ nombre: nombreEmpresa, giro: giro || null, num_empleados: numEmpleados || null, admin_id: userId })
-          .select('id')
-          .single();
+      // 2. Crear empresa y perfil (si hay sesión activa; si no, AuthContext los crea en el primer login)
+      const { data: empresa, error: empError } = await supabase
+        .from('empresas')
+        .insert({ nombre: nombreEmpresa, giro: giro || null, num_empleados: numEmpleados || null, admin_id: userId })
+        .select('id')
+        .single();
 
-        if (empError) {
-          setError('Error al crear la empresa: ' + empError.message);
-          setLoading(false);
-          return;
-        }
-
-        await supabase.from('perfiles').upsert({
-          id: userId, nombre: nombreAdmin, email: cleanEmail,
-          empresa_id: empresa.id, rol: 'admin',
-        });
+      if (!empError && empresa) {
+        await supabase.from('perfiles').upsert(
+          { id: userId, nombre: nombreAdmin, email: cleanEmail, empresa_id: empresa.id, rol: 'admin' },
+          { onConflict: 'id' }
+        );
       }
+      // Si empError (ej: email confirm activo y sin sesión), AuthContext provisiona empresa en primer login
 
       setSent(true);
     } catch {

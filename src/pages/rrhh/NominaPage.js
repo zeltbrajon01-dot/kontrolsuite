@@ -413,7 +413,7 @@ function EditModal({ record, empleado, onClose, onSaved }) {
 /* ═══════════════════════════════════════════════════════════ */
 export default function NominaPage() {
   const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
   const [tab, setTab]               = useState('nomina');
   const [periodo, setPeriodo]       = useState(currentPeriodo());
   const [empleados, setEmpleados]   = useState([]);
@@ -425,7 +425,6 @@ export default function NominaPage() {
 
   /* ── Load empleados ── */
   useEffect(() => {
-    if (!isSuperAdmin && !empresaId) { setEmpleados([]); setLoading(false); return; }
     ef(supabase.from('empleados').select('id, nombre, apellido, puesto, departamento, sueldo, estado'))
       .eq('estado', 'activo')
       .order('nombre')
@@ -434,7 +433,6 @@ export default function NominaPage() {
 
   /* ── Load nomina for current period ── */
   const fetchNomina = useCallback(async () => {
-    if (!isSuperAdmin && !empresaId) { setNominaRecs([]); return; }
     const { data } = await ef(supabase.from('nomina').select('*')).eq('periodo', periodo).order('created_at');
     setNominaRecs(data ?? []);
   }, [periodo, empresaId, isSuperAdmin]); // eslint-disable-line

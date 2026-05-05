@@ -15,15 +15,8 @@ export function useStats() {
   const load = useCallback(async () => {
     if (perfilLoading) return;
 
-    if (!isSuperAdmin && !empresaId) {
-      console.warn('[Dashboard] empresaId no disponible — omitiendo carga de stats');
-      setStats({ empleados:0, proyectos:0, tareas:0, leads:0, ventasMes:0, gastosMes:0, balanceMes:0, proyectosByEstado:[], barData:[] });
-      setLoading(false);
-      return;
-    }
-
     console.log('[Dashboard] cargando stats — empresa:', empresaId, '| superAdmin:', isSuperAdmin);
-    const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+    const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
 
     try {
       const now      = new Date();

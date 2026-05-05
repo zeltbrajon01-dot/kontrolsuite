@@ -111,7 +111,7 @@ function NavItem({ to, label, icon, end, collapsed, onNavigate }) {
 
 /* ─── Layout principal ───────────────────────────────────────── */
 export default function DashboardLayout() {
-  const { user, signOut, perfilLoading, empresaId, isSuperAdmin } = useAuth();
+  const { user, signOut, perfilLoading } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -388,17 +388,8 @@ export default function DashboardLayout() {
           {perfilLoading ? (
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:16 }}>
               <div style={{ width:36, height:36, border:'3px solid var(--hy-border)', borderTopColor:'var(--hy-brand)', borderRadius:'50%', animation:'hy-spin 0.8s linear infinite' }} />
-              <p style={{ margin:0, fontSize:14, color:'var(--hy-text3)', fontFamily:'Montserrat, sans-serif' }}>Cargando tu empresa…</p>
+              <p style={{ margin:0, fontSize:14, color:'var(--hy-text3)', fontFamily:'Montserrat, sans-serif' }}>Cargando…</p>
               <style>{`@keyframes hy-spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : (!empresaId && !isSuperAdmin) ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'60vh', gap:12, textAlign:'center', padding:32 }}>
-              <span style={{ fontSize:48 }}>🏢</span>
-              <p style={{ margin:0, fontSize:17, fontWeight:800, color:'var(--hy-text1)', fontFamily:'Montserrat, sans-serif' }}>Configurando tu empresa</p>
-              <p style={{ margin:0, fontSize:13, color:'var(--hy-text4)', fontFamily:'Montserrat, sans-serif', maxWidth:420, lineHeight:1.6 }}>Tu cuenta está siendo configurada. Si esto tarda más de unos segundos, recarga la página o contacta al administrador.</p>
-              <button onClick={() => window.location.reload()} style={{ marginTop:8, padding:'9px 22px', borderRadius:8, fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'Montserrat, sans-serif', backgroundColor:'var(--hy-brand)', color:'#fff', border:'none' }}>
-                Recargar página
-              </button>
             </div>
           ) : (
             <Outlet />

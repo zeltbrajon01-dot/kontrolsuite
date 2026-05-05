@@ -409,7 +409,7 @@ function Field({ label, children }) {
 /* ══════════════════════════════════════════════════════════ */
 export default function RRHHPage() {
   const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
   const [empleados, setEmpleados]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [modalOpen, setModalOpen]   = useState(false);
@@ -427,7 +427,6 @@ export default function RRHHPage() {
 
   /* ── Carga de datos ── */
   const fetchEmpleados = useCallback(async () => {
-    if (!isSuperAdmin && !empresaId) { setEmpleados([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from('empleados')

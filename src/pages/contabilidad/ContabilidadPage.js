@@ -157,7 +157,7 @@ function MovimientoModal({ movimiento, onSave, onClose }) {
 /* ── ContabilidadPage ───────────────────────────────────── */
 export default function ContabilidadPage() {
   const { empresaId, isSuperAdmin } = useAuth();
-  const ef = (q) => isSuperAdmin ? q : q.eq('empresa_id', empresaId);
+  const ef = (q) => (isSuperAdmin || !empresaId) ? q : q.eq('empresa_id', empresaId);
   const [movimientos, setMovimientos] = useState([]);
   const [gastos, setGastos]           = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -167,7 +167,6 @@ export default function ContabilidadPage() {
   const [filterMes, setFilterMes]     = useState(isoMonth(new Date()));
 
   const fetchAll = useCallback(async () => {
-    if (!isSuperAdmin && !empresaId) { setMovimientos([]); setGastos([]); setLoading(false); return; }
     const [{ data:m }, { data:g }] = await Promise.all([
       ef(supabase.from('movimientos_contables').select('*')).order('fecha', { ascending:false }),
       ef(supabase.from('gastos').select('area, monto')),
