@@ -608,6 +608,7 @@ export default function VentasPage() {
   const [addingCol,     setAddingCol]     = useState(false);
   const [filterEst,     setFilterEst]     = useState('all');
   const [ingData,       setIngData]       = useState([]);
+  const [colError,      setColError]      = useState(null);
   const dragRef = useRef(null);
 
   /* Build full column list: default ETAPAS merged with DB overrides + custom columns */
@@ -631,7 +632,9 @@ export default function VentasPage() {
   }, [columnas]);
 
   const fetchColumnas = useCallback(async () => {
-    const { data } = await ef(supabase.from('pipeline_columnas').select('*')).order('orden');
+    const { data, error } = await ef(supabase.from('pipeline_columnas').select('*')).order('orden');
+    if (error) console.error('[Pipeline] fetchColumnas error:', error);
+    else console.log('[Pipeline] fetchColumnas ok — rows:', data?.length, '| empresaId:', empresaId);
     setColumnas(data || []);
   }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
@@ -674,28 +677,35 @@ export default function VentasPage() {
   };
 
   const handleRenameCol = async (col, newLabel) => {
-    if (!empresaId) return;
+    setColError(null);
+    if (!empresaId) { setColError('No se pudo renombrar: empresa no cargada. Recarga la página.'); return; }
+    console.log('[Pipeline] handleRenameCol', { col, newLabel, empresaId });
+    let err;
     if (col._dbId) {
-      // Update existing DB row (override or custom column)
-      await supabase.from('pipeline_columnas').update({ label: newLabel }).eq('id', col._dbId);
+      ({ error: err } = await supabase.from('pipeline_columnas').update({ label: newLabel }).eq('id', col._dbId));
     } else {
-      // Create override for a default ETAPA
-      await supabase.from('pipeline_columnas').insert({
+      ({ error: err } = await supabase.from('pipeline_columnas').insert({
         empresa_id: empresaId, base_etapa_id: col.id, label: newLabel,
         color: col.color, icon: col.icon, orden: 0,
         created_at: new Date().toISOString(),
-      });
+      }));
     }
+    if (err) { console.error('[Pipeline] handleRenameCol error:', err); setColError(`Error al renombrar: ${err.message}`); return; }
+    console.log('[Pipeline] handleRenameCol OK');
     fetchColumnas();
   };
 
   const handleAddColumna = async (label, color, icon) => {
-    if (!empresaId) return;
+    setColError(null);
+    if (!empresaId) { setColError('No se pudo crear la columna: empresa no cargada. Recarga la página.'); return; }
     const orden = columnas.filter(c => !c.base_etapa_id).length + ETAPAS_DEFAULT.length;
-    await supabase.from('pipeline_columnas').insert({
+    console.log('[Pipeline] handleAddColumna', { label, color, icon, empresaId, orden });
+    const { error: err } = await supabase.from('pipeline_columnas').insert({
       empresa_id: empresaId, label, color, icon, orden,
       created_at: new Date().toISOString(),
     });
+    if (err) { console.error('[Pipeline] handleAddColumna error:', err); setColError(`Error al crear columna: ${err.message}`); return; }
+    console.log('[Pipeline] handleAddColumna OK');
     fetchColumnas();
   };
 
@@ -745,6 +755,12 @@ export default function VentasPage() {
           <p style={{ margin:'0 0 10px', fontSize:11, color:'var(--hy-text4)' }}>
             💡 Arrastra leads entre columnas · Doble clic o <strong>✏️</strong> en el encabezado para renombrarlo · Doble clic en una tarjeta para editar inline
           </p>
+          {colError && (
+            <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12, padding:'10px 16px', borderRadius:8, background:'rgba(244,63,94,.1)', border:'1px solid rgba(244,63,94,.35)', color:'#f43f5e', fontSize:13, fontFamily:'Montserrat, sans-serif' }}>
+              <span>⚠️ {colError}</span>
+              <button onClick={() => setColError(null)} style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'#f43f5e', fontSize:16, lineHeight:1, padding:0 }}>×</button>
+            </div>
+          )}
           <div style={{ display:'flex', gap:12, overflowX:'auto', paddingBottom:16, alignItems:'flex-start' }}>
             {pipelineColumnas.map(col => (
               <KanbanCol key={col.id} col={col}
