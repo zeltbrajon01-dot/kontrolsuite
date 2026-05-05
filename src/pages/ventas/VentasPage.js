@@ -21,12 +21,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-
-console.log('[VentasPage] VERSION 2.0 — empresa filter + delete col');
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, PieChart, Pie, Cell,
 } from 'recharts';
+
+console.log('[VentasPage] VERSION 2.0 — empresa filter + delete col');
 
 const TT_STYLE = { backgroundColor:'var(--hy-bg-card)', border:'1px solid var(--hy-border)', borderRadius:8, fontSize:12, fontFamily:'Montserrat,sans-serif' };
 
@@ -707,7 +707,8 @@ export default function VentasPage() {
     setLoading(false);
   }, [empresaId, isSuperAdmin]); // eslint-disable-line
 
-  useEffect(() => { fetchAll(); fetchColumnas(); }, [fetchAll, fetchColumnas]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { if (!isSuperAdmin && !empresaId) return; fetchColumnas(); }, [fetchColumnas, empresaId, isSuperAdmin]); // eslint-disable-line
 
   const handleDrop = async (colId) => {
     const id = dragRef.current;
